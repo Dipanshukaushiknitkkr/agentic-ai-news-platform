@@ -24,6 +24,15 @@ from scrapers.techcrunch import fetch_and_save_techcrunch_articles
 from fastapi.templating import Jinja2Templates
 
 app = FastAPI(title="Tech News Digest API", description="Personalized tech news digests and notifications")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 templates = Jinja2Templates(directory="templates")

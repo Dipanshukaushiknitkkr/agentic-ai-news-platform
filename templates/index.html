@@ -373,16 +373,25 @@
         }
 
         function applyFilters() {
-            const query = document.getElementById('searchArticles').value.toLowerCase().trim();
+            const searchInput = document.getElementById('searchArticles');
+            const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
             const wrappers = document.querySelectorAll('#articlesGrid .article-wrapper');
             
             wrappers.forEach(wrapper => {
                 const card = wrapper.querySelector('.article-card');
-                const title = card.querySelector('.article-title').textContent.toLowerCase();
-                const description = card.querySelector('.article-description').textContent.toLowerCase();
-                const categories = wrapper.dataset.categories.split(',');
+                if (!card) return;
                 
-                const matchesSearch = title.includes(query) || description.includes(query);
+                const titleElem = card.querySelector('.article-title');
+                const descElem = card.querySelector('.article-description');
+                const aiSummaryElem = card.querySelector('.article-ai-text');
+                
+                const title = titleElem ? titleElem.textContent.toLowerCase() : '';
+                const description = descElem ? descElem.textContent.toLowerCase() : '';
+                const aiSummary = aiSummaryElem ? aiSummaryElem.textContent.toLowerCase() : '';
+                
+                const categories = wrapper.dataset.categories ? wrapper.dataset.categories.split(',') : [];
+                
+                const matchesSearch = !query || title.includes(query) || description.includes(query) || aiSummary.includes(query);
                 const matchesCategory = currentCategory === 'All' || categories.includes(currentCategory);
                 
                 if (matchesSearch && matchesCategory) {

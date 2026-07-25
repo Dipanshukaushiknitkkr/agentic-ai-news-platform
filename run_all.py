@@ -30,7 +30,7 @@ def run():
     update_cmd = [
         python_exe, 
         "-c", 
-        "from services.categorization_service import categorizer; categorizer.scrape_and_sync_articles()"
+        "from services.categorization_service import sync_articles; sync_articles()"
     ]
 
     update_process = subprocess.Popen(update_cmd)
