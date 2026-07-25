@@ -139,6 +139,22 @@ class ContentCategorizer:
                     with open(filepath, 'r', encoding='utf-8') as f:
                         article_data = json.load(f)
                     
+                    # Parse publication date or filename date prefix
+                    pub_str = article_data.get('published', '')
+                    created_at_dt = datetime.now()
+                    if pub_str:
+                        try:
+                            from email.utils import parsedate_to_datetime
+                            created_at_dt = parsedate_to_datetime(pub_str).replace(tzinfo=None)
+                        except Exception:
+                            pass
+                    if created_at_dt.date() == datetime.now().date():
+                        try:
+                            parts = filename.split('-')[:3]
+                            created_at_dt = datetime.strptime('-'.join(parts), '%Y-%m-%d')
+                        except Exception:
+                            pass
+
                     # Create article record
                     article = Article(
                         id=article_id,
@@ -147,7 +163,8 @@ class ContentCategorizer:
                         summary=article_data.get('summary', ''),
                         llm_summary=article_data.get('llm_summary', ''),
                         published=article_data.get('published', ''),
-                        image_url=article_data.get('image_url', '')
+                        image_url=article_data.get('image_url', ''),
+                        created_at=created_at_dt
                     )
                     db.add(article)
                     db.flush()  # Get the article ID
