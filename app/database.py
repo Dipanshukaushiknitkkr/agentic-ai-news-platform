@@ -5,20 +5,22 @@ import os
 
 # Database configuration
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./tech_news.db")
-if DATABASE_URL.startswith("postgres://"):
-    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+pg8000://", 1)
-elif DATABASE_URL.startswith("postgresql://") and "+pg8000" not in DATABASE_URL and "+psycopg2" not in DATABASE_URL:
-    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+pg8000://", 1)
 
-# Ensure SSL mode is enabled for Render PostgreSQL
-if "sqlite" not in DATABASE_URL and "sslmode=" not in DATABASE_URL:
-    separator = "&" if "?" in DATABASE_URL else "?"
-    DATABASE_URL = f"{DATABASE_URL}{separator}sslmode=require"
+# Force psycopg2 dialect for PostgreSQL (natively supports sslmode=require)
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+psycopg2://", 1)
+elif DATABASE_URL.startswith("postgresql://") and "+psycopg2" not in DATABASE_URL and "+pg8000" not in DATABASE_URL:
+    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg2://", 1)
+elif "+pg8000" in DATABASE_URL:
+    DATABASE_URL = DATABASE_URL.replace("+pg8000", "+psycopg2", 1)
+
+connect_args = {"check_same_thread": False} if "sqlite" in DATABASE_URL else {}
+pool_pre_ping = True if "sqlite" not in DATABASE_URL else False
 
 engine = create_engine(
     DATABASE_URL, 
-    connect_args={"check_same_thread": False} if "sqlite" in DATABASE_URL else {},
-    pool_pre_ping=True if "sqlite" not in DATABASE_URL else False
+    connect_args=connect_args,
+    pool_pre_ping=pool_pre_ping
 )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
