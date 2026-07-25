@@ -1,6 +1,7 @@
 import os
 import json
 import re
+from datetime import datetime, timedelta
 from typing import List, Dict, Tuple
 from sqlalchemy.orm import Session
 import sys
@@ -83,7 +84,6 @@ class ContentCategorizer:
         .md/.json files in data/summaries/ so they aren't re-synced back in
         on the next sync pass.
         """
-        from datetime import datetime, timedelta
         owns_session = db is None
         if owns_session:
             db = SessionLocal()
