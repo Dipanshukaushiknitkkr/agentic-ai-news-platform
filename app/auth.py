@@ -22,10 +22,14 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
 
 def verify_password(plain_password, hashed_password):
     """Verify a plain password against its hash"""
+    if isinstance(plain_password, str):
+        plain_password = plain_password.encode('utf-8')[:72].decode('utf-8', errors='ignore')
     return pwd_context.verify(plain_password, hashed_password)
 
 def get_password_hash(password):
-    """Hash a password"""
+    """Hash a password, safely truncating to 72 bytes for bcrypt limit"""
+    if isinstance(password, str):
+        password = password.encode('utf-8')[:72].decode('utf-8', errors='ignore')
     return pwd_context.hash(password)
 
 def get_user_by_email(db: Session, email: str):
