@@ -18,3 +18,4 @@ passlib[bcrypt]
 fastapi-users[sqlalchemy]
 httpx
 pymysql
+psycopg2-binary
