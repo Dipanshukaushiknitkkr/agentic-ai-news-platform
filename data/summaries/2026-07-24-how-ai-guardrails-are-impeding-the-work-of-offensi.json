@@ -1,0 +1,8 @@
+{
+  "title": "How AI guardrails are impeding the work of offensive cybersecurity researchers",
+  "link": "https://techcrunch.com/2026/07/23/how-ai-guardrails-are-impeding-the-work-of-offensive-cybersecurity-researchers/",
+  "summary": "We spoke with several cybersecurity researchers, who look for unknown vulnerabilities and develop tools to exploit them, about how OpenAI’s and Anthropic’s guardrails affect their work.",
+  "published": "Fri, 24 Jul 2026 01:00:00 +0000",
+  "image_url": "https://techcrunch.com/wp-content/uploads/2026/06/claude-mythos-logo.jpg?resize=1200,800",
+  "llm_summary": "Cybersecurity researchers are facing limitations in their work due to AI guardrails, which are designed to prevent AI models from generating harmful content or actions. Researchers who look for vulnerabilities and develop tools to exploit them are finding that these guardrails restrict their ability to test and understand the capabilities of AI models. This is impacting their ability to stay ahead of emerging threats and develop effective solutions."
+}

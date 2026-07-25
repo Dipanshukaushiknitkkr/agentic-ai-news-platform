@@ -1,0 +1,9 @@
+# As US weighs response to Chinese AI, industry urges against broad open-weight restrictions
+
+**Published:** Fri, 24 Jul 2026 15:51:49 +0000
+
+**Link:** [https://techcrunch.com/2026/07/24/as-us-weighs-response-to-chinese-ai-industry-urges-against-broad-open-weight-restrictions/](https://techcrunch.com/2026/07/24/as-us-weighs-response-to-chinese-ai-industry-urges-against-broad-open-weight-restrictions/)
+
+**LLM Summary:** 
+
+AI companies, including Nvidia and Mistral, urge policymakers to avoid broad restrictions on open-weight AI models as Washington debates responses to Chinese AI and alleged model distillation.

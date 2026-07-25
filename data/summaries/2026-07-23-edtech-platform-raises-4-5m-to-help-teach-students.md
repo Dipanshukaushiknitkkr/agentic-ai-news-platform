@@ -1,0 +1,9 @@
+# Edtech platform raises $4.5M to help teach students how to vibe code
+
+**Published:** Thu, 23 Jul 2026 15:00:00 +0000
+
+**Link:** [https://techcrunch.com/2026/07/23/edtech-platform-raises-4-5m-to-help-teach-students-how-to-vibe-code/](https://techcrunch.com/2026/07/23/edtech-platform-raises-4-5m-to-help-teach-students-how-to-vibe-code/)
+
+**LLM Summary:** Imagi, an edtech platform, has secured a $4.5 million seed investment to develop its coding education tools. Backed by investors such as Brighteye Ventures and Day One Capital, as well as artist Will.i.am, the platform aims to teach students how to code effectively. The funding will help Imagi expand its offerings and reach more students.
+
+Imagi announced a $4.5 million seed round, with investors including Brighteye Ventures, Day One Capital, and artist Will.i.am.

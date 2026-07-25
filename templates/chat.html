@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Assistant - Tech News Aggregator</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        /* Specific page styling additions for Chat Assistant */
+        .chat-container {
+            max-width: 800px;
+            margin: 120px auto 40px auto;
+            height: calc(100vh - 180px);
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+            box-shadow: 0 0 10px var(--success);
+            animation: pulse-glow 2s infinite;
+        }
+
+        @keyframes pulse-glow {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
+
+        .chat-log {
+            padding: 24px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .msg-wrapper {
+            display: flex;
+            width: 100%;
+        }
+
+        .msg-wrapper.user {
+            justify-content: flex-end;
+        }
+
+        .msg-wrapper.agent {
+            justify-content: flex-start;
+        }
+
+        .msg-bubble {
+            max-width: 75%;
+            padding: 14px 20px;
+            border-radius: 16px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .user .msg-bubble {
+            background: linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%);
+            color: white;
+            border-bottom-right-radius: 4px;
+            box-shadow: 0 4px 15px var(--primary-glow);
+        }
+
+        .agent .msg-bubble {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            border-bottom-left-radius: 4px;
+        }
+
+        .chat-input-area {
+            padding: 20px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 12px;
+        }
+
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            align-self: flex-start;
+            margin-left: 24px;
+            margin-bottom: 20px;
+        }
+
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--text-muted);
+            border-radius: 50%;
+            animation: typing 1.4s infinite both;
+        }
+
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typing {
+            0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+            45% { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Aurora background animations -->
+    <div class="aurora-bg">
+        <div class="aurora-element aurora-1"></div>
+        <div class="aurora-element aurora-2"></div>
+        <div class="aurora-element aurora-3"></div>
+    </div>
+
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="container navbar-container">
+            <a href="/" class="brand">
+                <i class="fa-solid fa-cube text-secondary"></i>
+                TECH<span>CORE</span>
+            </a>
+            
+            <ul class="nav-links">
+                <li><a href="/" class="nav-link">Explore</a></li>
+                <li><a href="/chat" class="nav-link active">AI Chat</a></li>
+                <li id="dashboardLink" style="display: none;"><a href="/dashboard" class="nav-link">Dashboard</a></li>
+            </ul>
+
+            <div class="navbar-actions">
+                <a href="/" class="btn btn-secondary">
+                    <i class="fa-solid fa-arrow-left"></i> Back to Hub
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Chat assistant shell console -->
+    <div class="container">
+        <div class="chat-container glass-card">
+            <!-- Header -->
+            <div class="chat-header">
+                <div class="status-dot"></div>
+                <div>
+                    <h3 style="font-family: var(--font-heading); font-size: 16px;">Core intelligence</h3>
+                    <p style="color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">LLM Assistant Online</p>
+                </div>
+            </div>
+
+            <!-- Messages Log -->
+            <div class="chat-log" id="chatLog">
+                <div class="msg-wrapper agent">
+                    <div class="msg-bubble">
+                        Hello! I am your AI Tech Assistant. Ask me anything about the latest tech articles, startup fundings, AI news, or your current newsletter settings! 👋
+                    </div>
+                </div>
+            </div>
+
+            <!-- Typing indicator -->
+            <div class="typing-indicator" id="typingIndicator" style="display: none;">
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+            </div>
+
+            <!-- Input bar -->
+            <div class="chat-input-area">
+                <input type="text" id="userInput" class="input-field" placeholder="Ask about AI, Nvidia, tech acquisitions..." style="flex: 1; border-radius: 99px;" onkeydown="checkEnter(event)">
+                <button onclick="sendQuestion()" class="btn btn-primary" style="border-radius: 99px; width: 48px; height: 48px; padding: 0;">
+                    <i class="fa-solid fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/static/js/app.js"></script>
+    <script>
+        // Check if token exists to update header buttons
+        const token = localStorage.getItem('authToken');
+        if (token) {
+            document.getElementById('dashboardLink').style.display = 'block';
+        }
+
+        const chatLog = document.getElementById('chatLog');
+        const userInput = document.getElementById('userInput');
+        const typingIndicator = document.getElementById('typingIndicator');
+
+        function checkEnter(e) {
+            if (e.key === 'Enter') {
+                sendQuestion();
+            }
+        }
+
+        async function sendQuestion() {
+            const query = userInput.value.trim();
+            if (!query) return;
+
+            // Render User Bubble
+            renderBubble(query, 'user');
+            userInput.value = '';
+            
+            // Show Typing Indicator
+            typingIndicator.style.display = 'flex';
+            chatLog.scrollTop = chatLog.scrollHeight;
+
+            try {
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question: query })
+                });
+
+                // Hide Typing Indicator
+                typingIndicator.style.display = 'none';
+
+                if (response.ok) {
+                    const data = await response.json();
+                    renderBubble(data.answer, 'agent');
+                } else {
+                    renderBubble('I encountered an error connecting to my knowledge base. Please try again.', 'agent');
+                }
+            } catch (err) {
+                typingIndicator.style.display = 'none';
+                renderBubble('Failed to send request. Make sure the server is online.', 'agent');
+            }
+            
+            chatLog.scrollTop = chatLog.scrollHeight;
+        }
+
+        function renderBubble(text, sender) {
+            const wrapper = document.createElement('div');
+            wrapper.className = `msg-wrapper ${sender}`;
+            
+            const bubble = document.createElement('div');
+            bubble.className = 'msg-bubble';
+            bubble.textContent = text;
+            
+            wrapper.appendChild(bubble);
+            chatLog.appendChild(wrapper);
+        }
+    </script>
+</body>
+</html>

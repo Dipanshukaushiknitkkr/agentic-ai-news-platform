@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Digest Dashboard - Tech News</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header h1 {
+            color: #2d3748;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+        
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+        
+        .user-info {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            padding: 15px 20px;
+            margin: 20px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .user-email {
+            font-weight: 600;
+            color: #667eea;
+        }
+        
+        .logout-btn {
+            background: #e53e3e;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        }
+        
+        .card-title {
+            font-size: 1.4em;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #2d3748;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .card-icon {
+            font-size: 1.5em;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #4a5568;
+        }
+        
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+            transform: scale(1.2);
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+        
+        .btn-secondary:hover {
+            background: #cbd5e0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .categories-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .category-item {
+            padding: 10px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        
+        .category-item.selected {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .category-item:hover {
+            border-color: #667eea;
+        }
+        
+        .subscription-item {
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .keywords {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+        
+        .keyword-tag {
+            background: #667eea;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        
+        .delete-btn {
+            background: #e53e3e;
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .message {
+            padding: 12px;
+            border-radius: 8px;
+            margin: 15px 0;
+            display: none;
+        }
+        
+        .message.success {
+            background: #c6f6d5;
+            color: #25543e;
+            border: 1px solid #9ae6b4;
+        }
+        
+        .message.error {
+            background: #fed7d7;
+            color: #c53030;
+            border: 1px solid #feb2b2;
+        }
+        
+        .stats-card {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 20px;
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+        
+        .preview-section {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        
+        .article-preview {
+            border-bottom: 1px solid #e2e8f0;
+            padding: 10px 0;
+        }
+        
+        .article-preview:last-child {
+            border-bottom: none;
+        }
+        
+        .article-title {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 5px;
+        }
+        
+        .article-summary {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        .login-prompt {
+            text-align: center;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            margin: 50px auto;
+            max-width: 500px;
+        }
+        
+        .login-prompt h2 {
+            color: #2d3748;
+            margin-bottom: 20px;
+        }
+        
+        .login-prompt p {
+            color: #666;
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>📰 My Digest Dashboard</h1>
+            <p>Manage your personalized tech news preferences</p>
+            <div id="userInfo" class="user-info" style="display: none;">
+                <span class="user-email" id="userEmail"></span>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+        </div>
+
+        <!-- Login Prompt (shown when not authenticated) -->
+        <div id="loginPrompt" class="login-prompt">
+            <h2>🔐 Please Log In</h2>
+            <p>You need to log in to access your digest dashboard</p>
+            <button class="btn" onclick="goToLogin()">Go to Login Page</button>
+        </div>
+
+        <!-- Dashboard Content (shown when authenticated) -->
+        <div id="dashboardContent" style="display: none;">
+            <!-- Stats Card -->
+            <div class="card stats-card">
+                <div class="card-title">
+                    <span class="card-icon">📊</span>
+                    Your Digest Statistics
+                </div>
+                <div class="stats-grid">
+                    <div>
+                        <div class="stat-number" id="totalArticles">-</div>
+                        <div class="stat-label">Articles Available</div>
+                    </div>
+                    <div>
+                        <div class="stat-number" id="totalCategories">-</div>
+                        <div class="stat-label">Categories</div>
+                    </div>
+                    <div>
+                        <div class="stat-number" id="userSubscriptions">-</div>
+                        <div class="stat-label">Your Subscriptions</div>
+                    </div>
+                    <div>
+                        <div class="stat-number" id="digestsSent">-</div>
+                        <div class="stat-label">Digests Sent</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dashboard-grid">
+                <!-- Digest Preferences -->
+                <div class="card">
+                    <div class="card-title">
+                        <span class="card-icon">⚙️</span>
+                        Digest Preferences
+                    </div>
+                    <div class="message" id="preferencesMessage"></div>
+                    
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="dailyDigest" checked>
+                        <label for="dailyDigest">Daily Digest (recommended)</label>
+                    </div>
+                    
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="weeklyDigest" checked>
+                        <label for="weeklyDigest">Weekly Summary</label>
+                    </div>
+                    
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="instantNotifications">
+                        <label for="instantNotifications">Instant Breaking News</label>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="digestTime">Preferred Delivery Time</label>
+                        <input type="time" id="digestTime" value="09:00">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="timeZone">Time Zone</label>
+                        <select id="timeZone">
+                            <option value="UTC">UTC</option>
+                            <option value="EST">Eastern Time</option>
+                            <option value="PST">Pacific Time</option>
+                            <option value="CST">Central Time</option>
+                            <option value="MST">Mountain Time</option>
+                        </select>
+                    </div>
+                    
+                    <button class="btn" onclick="updatePreferences()">Save Preferences</button>
+                </div>
+
+                <!-- Category Selection -->
+                <div class="card">
+                    <div class="card-title">
+                        <span class="card-icon">📚</span>
+                        Interest Categories
+                    </div>
+                    <p style="color: #666; margin-bottom: 15px;">Select topics you're interested in:</p>
+                    <div id="categoriesGrid" class="categories-grid">
+                        <!-- Categories will be loaded here -->
+                    </div>
+                    <button class="btn" onclick="updateCategories()" style="margin-top: 15px;">Update Categories</button>
+                </div>
+
+                <!-- Custom Subscriptions -->
+                <div class="card">
+                    <div class="card-title">
+                        <span class="card-icon">🔍</span>
+                        Custom Keywords
+                    </div>
+                    <div class="message" id="subscriptionMessage"></div>
+                    
+                    <div class="form-group">
+                        <label for="newKeywords">Add Keywords (comma-separated)</label>
+                        <input type="text" id="newKeywords" placeholder="e.g., OpenAI, Machine Learning, Startup">
+                    </div>
+                    
+                    <button class="btn" onclick="addSubscription()">Add Subscription</button>
+                    
+                    <div id="subscriptionsList" style="margin-top: 20px;">
+                        <!-- Subscriptions will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Digest Preview -->
+                <div class="card">
+                    <div class="card-title">
+                        <span class="card-icon">👀</span>
+                        Preview Your Digest
+                    </div>
+                    
+                    <button class="btn btn-secondary" onclick="previewDigest()">Generate Preview</button>
+                    <button class="btn" onclick="sendDigestNow()" style="margin-top: 10px;">Send Digest Now</button>
+                    
+                    <div id="digestPreview" class="preview-section" style="display: none;">
+                        <!-- Preview will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Delivery History -->
+                <div class="card">
+                    <div class="card-title">
+                        <span class="card-icon">📧</span>
+                        Delivery History
+                    </div>
+                    
+                    <button class="btn btn-secondary" onclick="loadHistory()">Refresh History</button>
+                    
+                    <div id="deliveryHistory" style="margin-top: 15px;">
+                        <!-- History will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let authToken = localStorage.getItem('authToken');
+        let userCategories = [];
+        let availableCategories = [];
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            if (authToken) {
+                showDashboard();
+                loadUserData();
+            } else {
+                showLoginPrompt();
+            }
+        });
+
+        function showLoginPrompt() {
+            document.getElementById('loginPrompt').style.display = 'block';
+            document.getElementById('dashboardContent').style.display = 'none';
+        }
+
+        function showDashboard() {
+            document.getElementById('loginPrompt').style.display = 'none';
+            document.getElementById('dashboardContent').style.display = 'block';
+            document.getElementById('userInfo').style.display = 'flex';
+        }
+
+        function goToLogin() {
+            window.location.href = '/';
+        }
+
+        function logout() {
+            localStorage.removeItem('authToken');
+            window.location.href = '/';
+        }
+
+        async function loadUserData() {
+            try {
+                // Load user profile
+                const profileResponse = await fetch('/auth/me', {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                
+                if (profileResponse.ok) {
+                    const user = await profileResponse.json();
+                    document.getElementById('userEmail').textContent = user.email;
+                    
+                    // Set preferences
+                    document.getElementById('dailyDigest').checked = user.daily_digest_enabled;
+                    document.getElementById('weeklyDigest').checked = user.weekly_digest_enabled;
+                    document.getElementById('instantNotifications').checked = user.instant_notifications;
+                    document.getElementById('digestTime').value = user.digest_time;
+                    document.getElementById('timeZone').value = user.time_zone;
+                } else {
+                    throw new Error('Failed to load user data');
+                }
+
+                // Load categories
+                await loadCategories();
+                
+                // Load subscriptions
+                await loadSubscriptions();
+                
+                // Load statistics
+                await loadStatistics();
+
+            } catch (error) {
+                console.error('Error loading user data:', error);
+                showLoginPrompt();
+            }
+        }
+
+        async function loadCategories() {
+            try {
+                const response = await fetch('/categories');
+                if (response.ok) {
+                    availableCategories = await response.json();
+                    renderCategories();
+                }
+            } catch (error) {
+                console.error('Error loading categories:', error);
+            }
+        }
+
+        function renderCategories() {
+            const grid = document.getElementById('categoriesGrid');
+            grid.innerHTML = '';
+            
+            availableCategories.forEach(category => {
+                const item = document.createElement('div');
+                item.className = 'category-item';
+                item.textContent = category.name;
+                item.dataset.categoryId = category.id;
+                
+                if (userCategories.includes(category.id)) {
+                    item.classList.add('selected');
+                }
+                
+                item.onclick = function() {
+                    this.classList.toggle('selected');
+                };
+                
+                grid.appendChild(item);
+            });
+        }
+
+        async function loadSubscriptions() {
+            try {
+                const response = await fetch('/subscriptions', {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                
+                if (response.ok) {
+                    const subscriptions = await response.json();
+                    renderSubscriptions(subscriptions);
+                }
+            } catch (error) {
+                console.error('Error loading subscriptions:', error);
+            }
+        }
+
+        function renderSubscriptions(subscriptions) {
+            const list = document.getElementById('subscriptionsList');
+            list.innerHTML = '';
+            
+            if (subscriptions.length === 0) {
+                list.innerHTML = '<p style="color: #666; text-align: center;">No custom subscriptions yet</p>';
+                return;
+            }
+            
+            subscriptions.forEach(sub => {
+                const item = document.createElement('div');
+                item.className = 'subscription-item';
+                
+                const keywords = document.createElement('div');
+                keywords.className = 'keywords';
+                sub.keywords.forEach(keyword => {
+                    const tag = document.createElement('span');
+                    tag.className = 'keyword-tag';
+                    tag.textContent = keyword;
+                    keywords.appendChild(tag);
+                });
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'delete-btn';
+                deleteBtn.textContent = 'Remove';
+                deleteBtn.onclick = () => deleteSubscription(sub.id);
+                
+                item.appendChild(keywords);
+                item.appendChild(deleteBtn);
+                list.appendChild(item);
+            });
+        }
+
+        async function loadStatistics() {
+            try {
+                // Load article count
+                const articlesResponse = await fetch('/articles?limit=1000');
+                if (articlesResponse.ok) {
+                    const articles = await articlesResponse.json();
+                    document.getElementById('totalArticles').textContent = articles.length;
+                }
+                
+                // Load categories count
+                document.getElementById('totalCategories').textContent = availableCategories.length;
+                
+                // Load user subscriptions count
+                const subsResponse = await fetch('/subscriptions', {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                if (subsResponse.ok) {
+                    const subs = await subsResponse.json();
+                    document.getElementById('userSubscriptions').textContent = subs.length;
+                }
+                
+                // Load digest history count
+                const historyResponse = await fetch('/digest/history', {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                if (historyResponse.ok) {
+                    const history = await historyResponse.json();
+                    document.getElementById('digestsSent').textContent = history.length;
+                }
+
+            } catch (error) {
+                console.error('Error loading statistics:', error);
+            }
+        }
+
+        async function updatePreferences() {
+            const data = {
+                daily_digest_enabled: document.getElementById('dailyDigest').checked,
+                weekly_digest_enabled: document.getElementById('weeklyDigest').checked,
+                instant_notifications: document.getElementById('instantNotifications').checked,
+                digest_time: document.getElementById('digestTime').value,
+                time_zone: document.getElementById('timeZone').value,
+                interested_categories: getSelectedCategories()
+            };
+
+            try {
+                const response = await fetch('/preferences', {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const messageEl = document.getElementById('preferencesMessage');
+                if (response.ok) {
+                    showMessage(messageEl, 'Preferences updated successfully!', false);
+                    await loadStatistics();
+                } else {
+                    showMessage(messageEl, 'Failed to update preferences', true);
+                }
+            } catch (error) {
+                showMessage(messageEl, 'Network error', true);
+            }
+        }
+
+        function getSelectedCategories() {
+            const selected = [];
+            document.querySelectorAll('.category-item.selected').forEach(item => {
+                selected.push(parseInt(item.dataset.categoryId));
+            });
+            return selected;
+        }
+
+        async function updateCategories() {
+            userCategories = getSelectedCategories();
+            await updatePreferences();
+        }
+
+        async function addSubscription() {
+            const keywords = document.getElementById('newKeywords').value
+                .split(',').map(k => k.trim()).filter(k => k);
+            
+            if (keywords.length === 0) {
+                showMessage(document.getElementById('subscriptionMessage'), 'Please enter some keywords', true);
+                return;
+            }
+
+            const data = {
+                subscription_type: 'keyword',
+                keywords: keywords
+            };
+
+            try {
+                const response = await fetch('/subscriptions', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const messageEl = document.getElementById('subscriptionMessage');
+                if (response.ok) {
+                    showMessage(messageEl, 'Subscription added successfully!', false);
+                    document.getElementById('newKeywords').value = '';
+                    await loadSubscriptions();
+                    await loadStatistics();
+                } else {
+                    showMessage(messageEl, 'Failed to add subscription', true);
+                }
+            } catch (error) {
+                showMessage(messageEl, 'Network error', true);
+            }
+        }
+
+        async function deleteSubscription(id) {
+            try {
+                const response = await fetch(`/subscriptions/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+
+                if (response.ok) {
+                    await loadSubscriptions();
+                    await loadStatistics();
+                }
+            } catch (error) {
+                console.error('Error deleting subscription:', error);
+            }
+        }
+
+        async function previewDigest() {
+            try {
+                const response = await fetch('/digest/preview?digest_type=daily', {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+
+                const previewEl = document.getElementById('digestPreview');
+                if (response.ok) {
+                    const digest = await response.json();
+                    renderDigestPreview(digest);
+                    previewEl.style.display = 'block';
+                } else {
+                    previewEl.innerHTML = '<p style="color: #e53e3e;">Failed to load preview</p>';
+                    previewEl.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error loading preview:', error);
+            }
+        }
+
+        function renderDigestPreview(digest) {
+            const previewEl = document.getElementById('digestPreview');
+            let html = `<h4>📊 ${digest.total_articles} articles found</h4>`;
+            
+            Object.entries(digest.categories).forEach(([categoryName, articles]) => {
+                html += `<h5 style="color: #667eea; margin: 15px 0 10px 0;">📚 ${categoryName} (${articles.length})</h5>`;
+                articles.slice(0, 3).forEach(article => {
+                    html += `
+                        <div class="article-preview">
+                            <div class="article-title">${article.title}</div>
+                            <div class="article-summary">${article.llm_summary || article.summary.substring(0, 150) + '...'}</div>
+                        </div>
+                    `;
+                });
+            });
+            
+            previewEl.innerHTML = html;
+        }
+
+        async function sendDigestNow() {
+            try {
+                const response = await fetch('/digest/send?digest_type=daily', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+
+                if (response.ok) {
+                    alert('✅ Digest sent successfully! Check your email.');
+                    await loadStatistics();
+                } else {
+                    alert('❌ Failed to send digest. Please check your email configuration.');
+                }
+            } catch (error) {
+                alert('❌ Network error occurred.');
+            }
+        }
+
+        async function loadHistory() {
+            try {
+                const response = await fetch('/digest/history', {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+
+                const historyEl = document.getElementById('deliveryHistory');
+                if (response.ok) {
+                    const history = await response.json();
+                    renderHistory(history);
+                } else {
+                    historyEl.innerHTML = '<p style="color: #e53e3e;">Failed to load history</p>';
+                }
+            } catch (error) {
+                console.error('Error loading history:', error);
+            }
+        }
+
+        function renderHistory(history) {
+            const historyEl = document.getElementById('deliveryHistory');
+            
+            if (history.length === 0) {
+                historyEl.innerHTML = '<p style="color: #666; text-align: center;">No digests sent yet</p>';
+                return;
+            }
+            
+            let html = '';
+            history.slice(0, 10).forEach(record => {
+                const date = new Date(record.sent_at).toLocaleString();
+                const statusColor = record.email_status === 'sent' ? '#48bb78' : '#e53e3e';
+                html += `
+                    <div style="padding: 10px; border-bottom: 1px solid #e2e8f0;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span><strong>${record.digest_type.charAt(0).toUpperCase() + record.digest_type.slice(1)} Digest</strong></span>
+                            <span style="color: ${statusColor}; font-weight: 600;">${record.email_status}</span>
+                        </div>
+                        <div style="color: #666; font-size: 14px; margin-top: 5px;">
+                            ${date} • ${record.article_count} articles
+                        </div>
+                    </div>
+                `;
+            });
+            
+            historyEl.innerHTML = html;
+        }
+
+        function showMessage(element, text, isError) {
+            element.textContent = text;
+            element.className = isError ? 'message error' : 'message success';
+            element.style.display = 'block';
+            
+            setTimeout(() => {
+                element.style.display = 'none';
+            }, 5000);
+        }
+
+        // Load initial data
+        if (authToken) {
+            loadHistory();
+        }
+    </script>
+</body>
+</html>

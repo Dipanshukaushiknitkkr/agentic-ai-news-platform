@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tech News Aggregator - Personalized AI News Platform</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        /* Specific page styling additions for Index */
+        .hero {
+            padding: 160px 0 80px 0;
+            text-align: center;
+            position: relative;
+        }
+        
+        .hero h1 {
+            font-family: var(--font-heading);
+            font-size: clamp(36px, 6vw, 64px);
+            font-weight: 800;
+            letter-spacing: -2px;
+            line-height: 1.1;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #ffffff 0%, #a1a1aa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero h1 span {
+            background: linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero p {
+            font-size: clamp(16px, 2vw, 18px);
+            color: var(--text-muted);
+            max-width: 600px;
+            margin: 0 auto 32px auto;
+            line-height: 1.6;
+        }
+
+        .search-container {
+            max-width: 580px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 10;
+        }
+
+        .search-bar {
+            width: 100%;
+            padding: 16px 24px;
+            padding-left: 52px;
+            font-size: 16px;
+            border-radius: 99px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            backdrop-filter: blur(12px);
+            transition: all 0.3s;
+        }
+
+        .search-bar:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 25px var(--primary-glow);
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 18px;
+        }
+
+        /* Category pills list styling */
+        .category-filter {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 48px;
+            margin-bottom: 32px;
+        }
+
+        /* Article Grid */
+        .news-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+            gap: 32px;
+            margin-bottom: 80px;
+        }
+
+        .article-card {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            overflow: hidden;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.4s cubic-bezier(0.15, 0.83, 0.66, 1);
+            position: relative;
+        }
+
+        .article-card:hover {
+            transform: translateY(-6px);
+            border-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4), 
+                        0 0 15px var(--secondary-glow);
+        }
+
+        .article-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            background: rgba(255, 255, 255, 0.02);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .article-body {
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+
+        .article-title {
+            font-family: var(--font-heading);
+            font-size: 18px;
+            font-weight: 700;
+            line-height: 1.4;
+            color: var(--text-main);
+            margin-bottom: 10px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .article-date {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .ai-summary-badge {
+            align-self: flex-start;
+            background: rgba(6, 182, 212, 0.1);
+            border: 1px solid var(--secondary);
+            color: var(--secondary);
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .article-ai-text {
+            font-size: 13px;
+            color: #d4d4d8;
+            font-style: italic;
+            background: rgba(255, 255, 255, 0.02);
+            border-left: 3px solid var(--secondary);
+            padding: 8px 12px;
+            border-radius: 0 6px 6px 0;
+            margin-bottom: 16px;
+        }
+
+        .article-description {
+            font-size: 14px;
+            color: var(--text-muted);
+            line-height: 1.5;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            margin-bottom: 0;
+            margin-top: auto;
+        }
+    </style>
+</head>
+<body>
+    <!-- Aurora background animations -->
+    <div class="aurora-bg">
+        <div class="aurora-element aurora-1"></div>
+        <div class="aurora-element aurora-2"></div>
+        <div class="aurora-element aurora-3"></div>
+    </div>
+
+    <!-- Sticky Navbar -->
+    <nav class="navbar">
+        <div class="container navbar-container">
+            <a href="/" class="brand">
+                <i class="fa-solid fa-cube text-secondary"></i>
+                TECH<span>CORE</span>
+            </a>
+            
+            <ul class="nav-links">
+                <li><a href="/" class="nav-link active">Explore</a></li>
+                <li><a href="/chat" class="nav-link">AI Chat</a></li>
+                <li id="dashboardLink" style="display: none;"><a href="/dashboard" class="nav-link">Dashboard</a></li>
+            </ul>
+
+            <div class="navbar-actions">
+                <button onclick="showAPIInfo()" class="btn btn-secondary">
+                    <i class="fa-solid fa-code"></i> Developers
+                </button>
+                <div id="authActions">
+                    <button onclick="showAuthModal()" class="btn btn-primary">
+                        <i class="fa-solid fa-user"></i> Login / Register
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Infinite News Marquee Ticker -->
+    <div class="ticker-wrap" style="margin-top: 72px;">
+        <div class="ticker">
+            {% for article in articles[:5] %}
+            <div class="ticker-item">
+                <strong>TRENDING:</strong> {{ article.title }}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Hero Section -->
+    <header class="hero">
+        <div class="container">
+            <h1>Personalized <span>Tech Intelligence</span></h1>
+            <p>A next-generation tech aggregator powered by smart categorization and AI summaries. Subscribe to digests and get only what you care about.</p>
+            
+            <div class="search-container">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <input type="text" id="searchArticles" class="search-bar" placeholder="Search recent tech news..." oninput="filterArticles()">
+            </div>
+        </div>
+    </header>
+
+    <!-- Content Grid Section -->
+    <main class="container">
+        <!-- Category Filter Pills -->
+        <div class="category-filter">
+            <a href="#" class="pill active" onclick="filterCategory('All', this)">All Categories</a>
+            <a href="#" class="pill" onclick="filterCategory('Artificial Intelligence', this)">Artificial Intelligence</a>
+            <a href="#" class="pill" onclick="filterCategory('Startups & Funding', this)">Startups</a>
+            <a href="#" class="pill" onclick="filterCategory('Big Tech', this)">Big Tech</a>
+            <a href="#" class="pill" onclick="filterCategory('Cybersecurity', this)">Cybersecurity</a>
+            <a href="#" class="pill" onclick="filterCategory('Mobile & Apps', this)">Mobile & Apps</a>
+            <a href="#" class="pill" onclick="filterCategory('Enterprise & SaaS', this)">Enterprise</a>
+            <a href="#" class="pill" onclick="filterCategory('Electric Vehicles', this)">EVs</a>
+            <a href="#" class="pill" onclick="filterCategory('Fintech', this)">Fintech</a>
+        </div>
+
+        <!-- News Card Grid -->
+        <div class="news-grid" id="articlesGrid">
+            {% for article in articles %}
+            <!-- We store data attributes for filtering -->
+            <div class="article-wrapper" data-categories="{{ article.categories | map(attribute='name') | join(',') if article.categories else '' }}">
+                <a href="{{ article.link }}" class="article-card" target="_blank">
+                    <img src="{{ article.image_url or 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&auto=format&fit=crop&q=60' }}" class="article-image" alt="Article image">
+                    
+                    <div class="article-body">
+                        <div class="article-date">
+                            <i class="fa-regular fa-clock"></i> {{ article.published or 'Recently' }}
+                        </div>
+                        <div class="article-title">{{ article.title }}</div>
+                        
+                        {% if article.llm_summary %}
+                        <div class="ai-summary-badge">AI Summary</div>
+                        <div class="article-ai-text">{{ article.llm_summary }}</div>
+                        {% endif %}
+                        
+                        <p class="article-description">{{ article.summary[:200] }}...</p>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </main>
+
+    <!-- Developer API Modal -->
+    <div id="apiModal" class="modal">
+        <div class="modal-content glass-card">
+            <div class="modal-header">
+                <h3 class="brand"><i class="fa-solid fa-code"></i> Developer API</h3>
+                <button onclick="closeAPIModal()" class="modal-close">×</button>
+            </div>
+            <div style="margin-bottom: 20px;">
+                <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 16px;">Access our tech articles and metadata feeds directly in your own applications.</p>
+                
+                <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); padding: 16px; border-radius: 8px; margin-bottom: 16px;">
+                    <div class="input-label" style="margin-bottom: 4px;">BASE URL</div>
+                    <code style="color: var(--secondary); font-size: 13px; font-weight: bold;">http://localhost:8000</code>
+                </div>
+                
+                <h4 style="font-size: 14px; margin-bottom: 10px;">Endpoints:</h4>
+                <ul style="list-style: none; display: flex; flex-direction: column; gap: 8px;">
+                    <li style="font-size: 13px; padding: 10px; background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 6px;">
+                        <span style="color: var(--primary); font-weight: 700;">POST</span> <code>/auth/register</code> - Register User
+                    </li>
+                    <li style="font-size: 13px; padding: 10px; background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 6px;">
+                        <span style="color: var(--secondary); font-weight: 700;">GET</span> <code>/categories</code> - Get Categories
+                    </li>
+                    <li style="font-size: 13px; padding: 10px; background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 6px;">
+                        <span style="color: var(--secondary); font-weight: 700;">GET</span> <code>/preferences</code> - Get Preferences
+                    </li>
+                </ul>
+            </div>
+            <a href="/docs" class="btn btn-primary" style="width: 100%;" target="_blank">
+                <i class="fa-solid fa-circle-info"></i> View Interactive Docs
+            </a>
+        </div>
+    </div>
+
+    <!-- Auth Modal -->
+    <div id="authModal" class="modal">
+        <div class="modal-content glass-card">
+            <div class="modal-header">
+                <h3 class="brand" id="authTitle"><i class="fa-solid fa-shield-halved"></i> Security Portal</h3>
+                <button onclick="closeAuthModal()" class="modal-close">×</button>
+            </div>
+            
+            <div style="display: flex; gap: 12px; margin-bottom: 24px;">
+                <button id="registerTab" onclick="showRegister()" class="btn btn-primary" style="flex: 1;">Register</button>
+                <button id="loginTab" onclick="showLogin()" class="btn btn-secondary" style="flex: 1;">Login</button>
+            </div>
+            
+            <!-- Register Form -->
+            <div id="registerForm">
+                <div class="input-group">
+                    <span class="input-label">Full Name</span>
+                    <input type="text" id="regName" class="input-field" placeholder="John Doe">
+                </div>
+                <div class="input-group">
+                    <span class="input-label">Email Address</span>
+                    <input type="email" id="regEmail" class="input-field" placeholder="john@example.com">
+                </div>
+                <div class="input-group">
+                    <span class="input-label">Password</span>
+                    <input type="password" id="regPassword" class="input-field" placeholder="••••••••">
+                </div>
+                <button onclick="register()" class="btn btn-primary" style="width: 100%; margin-top: 10px;">
+                    Create Account & Subscribe
+                </button>
+            </div>
+
+            <!-- Login Form -->
+            <div id="loginForm" style="display: none;">
+                <div class="input-group">
+                    <span class="input-label">Email Address</span>
+                    <input type="email" id="loginEmail" class="input-field" placeholder="john@example.com">
+                </div>
+                <div class="input-group">
+                    <span class="input-label">Password</span>
+                    <input type="password" id="loginPassword" class="input-field" placeholder="••••••••">
+                </div>
+                <button onclick="login()" class="btn btn-primary" style="width: 100%; margin-top: 10px;">
+                    Log In to Dashboard
+                </button>
+            </div>
+            
+            <div id="authMessage" style="margin-top: 20px; padding: 12px; border-radius: 8px; font-size: 13px; font-weight: 500; display: none;"></div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/static/js/app.js"></script>
+    <script>
+        // Check if token exists to update header buttons
+        const token = localStorage.getItem('authToken');
+        if (token) {
+            document.getElementById('dashboardLink').style.display = 'block';
+            document.getElementById('authActions').innerHTML = `
+                <a href="/dashboard" class="btn btn-outline-glow">
+                    <i class="fa-solid fa-chart-line"></i> Dashboard
+                </a>
+            `;
+        }
+
+        // Frontend Client Filters
+        let currentCategory = 'All';
+
+        function filterCategory(categoryName, element) {
+            currentCategory = categoryName;
+            
+            // Toggle active pill styling
+            document.querySelectorAll('.category-filter .pill').forEach(pill => pill.classList.remove('active'));
+            element.classList.add('active');
+            
+            applyFilters();
+        }
+
+        function filterArticles() {
+            applyFilters();
+        }
+
+        function applyFilters() {
+            const query = document.getElementById('searchArticles').value.toLowerCase().trim();
+            const wrappers = document.querySelectorAll('#articlesGrid .article-wrapper');
+            
+            wrappers.forEach(wrapper => {
+                const card = wrapper.querySelector('.article-card');
+                const title = card.querySelector('.article-title').textContent.toLowerCase();
+                const description = card.querySelector('.article-description').textContent.toLowerCase();
+                const categories = wrapper.dataset.categories.split(',');
+                
+                const matchesSearch = title.includes(query) || description.includes(query);
+                const matchesCategory = currentCategory === 'All' || categories.includes(currentCategory);
+                
+                if (matchesSearch && matchesCategory) {
+                    wrapper.style.display = 'block';
+                } else {
+                    wrapper.style.display = 'none';
+                }
+            });
+        }
+
+        // Modal triggers
+        function showAuthModal() {
+            toggleModal('authModal', true);
+            showRegister();
+        }
+        function closeAuthModal() {
+            toggleModal('authModal', false);
+        }
+        function showAPIInfo() {
+            toggleModal('apiModal', true);
+        }
+        function closeAPIModal() {
+            toggleModal('apiModal', false);
+        }
+
+        function showRegister() {
+            document.getElementById('registerForm').style.display = 'block';
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('registerTab').className = 'btn btn-primary';
+            document.getElementById('loginTab').className = 'btn btn-secondary';
+        }
+
+        function showLogin() {
+            document.getElementById('registerForm').style.display = 'none';
+            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('registerTab').className = 'btn btn-secondary';
+            document.getElementById('loginTab').className = 'btn btn-primary';
+        }
+
+        // Auth Operations
+        function showMessage(text, isError = false) {
+            const messageDiv = document.getElementById('authMessage');
+            messageDiv.style.display = 'block';
+            messageDiv.style.background = isError ? 'rgba(229, 62, 62, 0.15)' : 'rgba(72, 187, 120, 0.15)';
+            messageDiv.style.border = isError ? '1px solid rgba(229, 62, 62, 0.3)' : '1px solid rgba(72, 187, 120, 0.3)';
+            messageDiv.style.color = isError ? '#feb2b2' : '#c6f6d5';
+            messageDiv.innerHTML = text;
+        }
+
+        async function register() {
+            const email = document.getElementById('regEmail').value;
+            const password = document.getElementById('regPassword').value;
+            const name = document.getElementById('regName').value;
+            
+            if (!email || !password) {
+                showMessage('Please fill in email and password', true);
+                return;
+            }
+            
+            try {
+                const response = await fetch('/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password, full_name: name })
+                });
+                
+                if (response.ok) {
+                    showMessage('Account created successfully! Logging in...');
+                    // Automatically log in
+                    setTimeout(async () => {
+                        const formData = new FormData();
+                        formData.append('username', email);
+                        formData.append('password', password);
+                        
+                        const tokenResponse = await fetch('/auth/token', {
+                            method: 'POST',
+                            body: formData
+                        });
+                        if (tokenResponse.ok) {
+                            const tokenData = await tokenResponse.json();
+                            localStorage.setItem('authToken', tokenData.access_token);
+                            window.location.href = '/dashboard';
+                        }
+                    }, 1500);
+                } else {
+                    const error = await response.json();
+                    showMessage(error.detail || 'Registration failed', true);
+                }
+            } catch (error) {
+                showMessage('Network error. Please try again.', true);
+            }
+        }
+
+        async function login() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            if (!email || !password) {
+                showMessage('Please fill in email and password', true);
+                return;
+            }
+            
+            try {
+                const formData = new FormData();
+                formData.append('username', email);
+                formData.append('password', password);
+                
+                const response = await fetch('/auth/token', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    localStorage.setItem('authToken', data.access_token);
+                    showMessage('Login successful! Redirecting...');
+                    setTimeout(() => {
+                        window.location.href = '/dashboard';
+                    }, 1500);
+                } else {
+                    showMessage('Invalid email or password', true);
+                }
+            } catch (error) {
+                showMessage('Network error. Please try again.', true);
+            }
+        }
+    </script>
+</body>
+</html>
