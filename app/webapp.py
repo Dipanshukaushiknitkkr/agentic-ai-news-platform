@@ -385,6 +385,17 @@ async def dashboard(request: Request):
 @app.get('/', response_class=HTMLResponse)
 def read_cards(request: Request, db: Session = Depends(get_db)):
     db_articles = db.query(Article).order_by(Article.created_at.desc()).all()
+    if not db_articles:
+        categorizer.sync_articles_from_files()
+        db_articles = db.query(Article).order_by(Article.created_at.desc()).all()
+    if not db_articles:
+        try:
+            fetch_and_save_techcrunch_articles()
+            categorizer.sync_articles_from_files()
+            db_articles = db.query(Article).order_by(Article.created_at.desc()).all()
+        except Exception as e:
+            print(f"Fallback article fetch failed: {e}")
+            
     articles = []
     for art in db_articles:
         articles.append({

@@ -88,21 +88,27 @@ class ContentCategorizer:
         if owns_session:
             db = SessionLocal()
         try:
+            total_articles = db.query(Article).count()
+            if total_articles <= 15:
+                print("Cleanup skipped: preserving minimum 15 articles.")
+                return 0
+
             cutoff = datetime.utcnow() - timedelta(days=days)
             old_articles = db.query(Article).filter(Article.created_at < cutoff).all()
+            
+            # Keep at least 15 most recent articles
+            if total_articles - len(old_articles) < 15:
+                # Sort old articles descending by date and keep enough to maintain 15
+                old_articles.sort(key=lambda a: a.created_at, reverse=True)
+                allowed_to_delete = total_articles - 15
+                old_articles = old_articles[allowed_to_delete:]
+
             deleted_count = len(old_articles)
             for article in old_articles:
                 db.query(ArticleCategory).filter(ArticleCategory.article_id == article.id).delete()
                 db.delete(article)
-                for ext in ('.md', '.json'):
-                    filepath = os.path.join('data/summaries/', f"{article.id}{ext}")
-                    if os.path.exists(filepath):
-                        try:
-                            os.remove(filepath)
-                        except Exception as e:
-                            print(f"Could not remove {filepath}: {e}")
             db.commit()
-            print(f"Cleanup: removed {deleted_count} articles older than {days} days")
+            print(f"Cleanup: removed {deleted_count} old articles.")
             return deleted_count
         except Exception as e:
             print(f"Error cleaning up old articles: {e}")
