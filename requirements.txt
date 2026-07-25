@@ -19,3 +19,4 @@ fastapi-users[sqlalchemy]
 httpx
 pymysql
 psycopg2-binary
+pg8000
