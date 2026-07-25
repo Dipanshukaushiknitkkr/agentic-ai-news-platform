@@ -10,6 +10,11 @@ if DATABASE_URL.startswith("postgres://"):
 elif DATABASE_URL.startswith("postgresql://") and "+pg8000" not in DATABASE_URL and "+psycopg2" not in DATABASE_URL:
     DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+pg8000://", 1)
 
+# Ensure SSL mode is enabled for Render PostgreSQL
+if "sqlite" not in DATABASE_URL and "sslmode=" not in DATABASE_URL:
+    separator = "&" if "?" in DATABASE_URL else "?"
+    DATABASE_URL = f"{DATABASE_URL}{separator}sslmode=require"
+
 engine = create_engine(
     DATABASE_URL, 
     connect_args={"check_same_thread": False} if "sqlite" in DATABASE_URL else {},
