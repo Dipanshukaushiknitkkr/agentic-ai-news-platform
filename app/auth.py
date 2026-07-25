@@ -29,8 +29,11 @@ def get_password_hash(password):
     return pwd_context.hash(password)
 
 def get_user_by_email(db: Session, email: str):
-    """Get user by email"""
-    return db.query(User).filter(User.email == email).first()
+    """Get user by email (case-insensitive)"""
+    if not email:
+        return None
+    normalized_email = email.lower().strip()
+    return db.query(User).filter(User.email.ilike(normalized_email)).first()
 
 def authenticate_user(db: Session, email: str, password: str):
     """Authenticate user with email and password"""
@@ -79,13 +82,14 @@ async def get_current_active_user(current_user: User = Depends(get_current_user)
 
 def create_user(db: Session, email: str, password: str, full_name: str = None):
     """Create a new user"""
+    normalized_email = email.lower().strip()
     # Check if user already exists
-    if get_user_by_email(db, email):
+    if get_user_by_email(db, normalized_email):
         raise HTTPException(status_code=400, detail="Email already registered")
     
     hashed_password = get_password_hash(password)
     db_user = User(
-        email=email,
+        email=normalized_email,
         hashed_password=hashed_password,
         full_name=full_name,
         is_active=True,

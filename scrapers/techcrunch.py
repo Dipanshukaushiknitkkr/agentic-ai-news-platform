@@ -4,6 +4,7 @@ from datetime import datetime
 import re
 import requests
 import json
+import time
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 load_dotenv()
@@ -38,7 +39,7 @@ def extract_image_url(entry):
     try:
         article_url = entry.link
         headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'}
-        resp = requests.get(article_url, headers=headers, timeout=10)
+        resp = requests.get(article_url, headers=headers, timeout=5)
         if resp.status_code == 200:
             soup = BeautifulSoup(resp.content, 'html.parser')
             # Try og:image
@@ -57,7 +58,8 @@ def get_llm_summary_groq(title, summary, audience="general tech audience"):
     api_key = os.getenv("GROQ_API_KEY")
     if not api_key:
         print("GROQ_API_KEY not set. Skipping LLM summarization.")
-        return ""
+        return summary[:200] if summary else title
+
     prompt = (
         f"Article title: {title}\n"
         f"Article summary: {summary}\n\n"
@@ -68,54 +70,82 @@ def get_llm_summary_groq(title, summary, audience="general tech audience"):
         "Content-Type": "application/json"
     }
     payload = {
-        "model": "llama-3.1-8b-instant",  # fast, free-tier Groq model; swap for "llama-3.3-70b-versatile" for higher quality
+        "model": "llama-3.3-70b-versatile",
         "max_tokens": 120,
         "temperature": 0.7,
         "messages": [
             {"role": "user", "content": prompt}
         ]
     }
-    try:
-        response = requests.post(
-            "https://api.groq.com/openai/v1/chat/completions",
-            headers=headers,
-            json=payload,
-            timeout=60
-        )
-        response.raise_for_status()
-        result = response.json()
-        return result["choices"][0]["message"]["content"].strip()
-    except Exception as e:
-        print(f"Groq API error: {e}")
-        return ""
+    
+    # Try up to 2 times with backoff on rate limits (429)
+    for attempt in range(2):
+        try:
+            response = requests.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                headers=headers,
+                json=payload,
+                timeout=15
+            )
+            if response.status_code == 429:
+                print("[GROQ RATE LIMIT] 429 received. Backing off for 2s...")
+                time.sleep(2)
+                continue
+            response.raise_for_status()
+            result = response.json()
+            return result["choices"][0]["message"]["content"].strip()
+        except Exception as e:
+            if attempt == 0:
+                time.sleep(1)
+            else:
+                print(f"Groq API fallback for '{title[:30]}...': {e}")
+                
+    # Fallback to cleaning HTML from summary snippet if LLM rate limited
+    clean_summary = re.sub(r'<[^>]+>', '', summary).strip()
+    return clean_summary[:200] + "..." if len(clean_summary) > 200 else clean_summary
 
 def fetch_and_save_techcrunch_articles():
     FEED_URL = 'https://techcrunch.com/feed/'
     SAVE_DIR = 'data/summaries/'
     os.makedirs(SAVE_DIR, exist_ok=True)
     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'}
-    response = requests.get(FEED_URL, headers=headers)
+    response = requests.get(FEED_URL, headers=headers, timeout=10)
     if response.status_code != 200:
         print(f"Failed to fetch feed: {response.status_code}")
         return
     feed = feedparser.parse(response.content)
     print(f"Fetched {len(feed.entries)} entries from TechCrunch RSS feed.")
+    
+    new_articles_count = 0
     for entry in feed.entries:
         title = entry.title
         link = entry.link
         summary = entry.summary if hasattr(entry, 'summary') else ''
         published = entry.published if hasattr(entry, 'published') else ''
-        image_url = extract_image_url(entry)
-        llm_summary = get_llm_summary_groq(title, summary)
+        
         date_str = ''
         if published:
             try:
                 date_obj = datetime(*entry.published_parsed[:6])
                 date_str = date_obj.strftime('%Y-%m-%d')
             except Exception:
-                date_str = ''
+                date_str = datetime.now().strftime('%Y-%m-%d')
+        else:
+            date_str = datetime.now().strftime('%Y-%m-%d')
+
         filename_base = f"{date_str}-{slugify(title)[:50]}"
-        # Save markdown as before, now with LLM summary
+        json_filepath = os.path.join(SAVE_DIR, f"{filename_base}.json")
+        
+        # Skip if already downloaded and processed!
+        if os.path.exists(json_filepath):
+            continue
+            
+        # Process new article
+        image_url = extract_image_url(entry)
+        llm_summary = get_llm_summary_groq(title, summary)
+        time.sleep(1)  # Respect rate limits (1s delay between new requests)
+        
+        # Save markdown
         md_filepath = os.path.join(SAVE_DIR, f"{filename_base}.md")
         with open(md_filepath, 'w', encoding='utf-8') as f:
             f.write(f"# {title}\n\n")
@@ -123,8 +153,8 @@ def fetch_and_save_techcrunch_articles():
             f.write(f"**Link:** [{link}]({link})\n\n")
             f.write(f"**LLM Summary:** {llm_summary}\n\n")
             f.write(f"{summary}\n")
+            
         # Save JSON with metadata
-        json_filepath = os.path.join(SAVE_DIR, f"{filename_base}.json")
         with open(json_filepath, 'w', encoding='utf-8') as jf:
             json.dump({
                 'title': title,
@@ -134,7 +164,10 @@ def fetch_and_save_techcrunch_articles():
                 'image_url': image_url,
                 'llm_summary': llm_summary
             }, jf, ensure_ascii=False, indent=2)
-    print("Done writing articles.")
+            
+        new_articles_count += 1
+        
+    print(f"Done writing articles. Processed {new_articles_count} new entries.")
 
 if __name__ == "__main__":
     fetch_and_save_techcrunch_articles()

@@ -82,6 +82,23 @@ class DigestService:
                     key = f"Custom: {', '.join(subscription.keywords[:3])}"
                     articles_by_category[key] = recent_articles
         
+        # Fallback if no articles found in short window: expand search window
+        if not articles_by_category and days_back < 7:
+            return self.get_articles_for_user(db, user, days_back=7, max_articles_per_category=max_articles_per_category)
+            
+        # Ultimate fallback if database has older articles: return recent articles across categories
+        if not articles_by_category:
+            all_cats = db.query(Category).all()
+            for category in all_cats:
+                articles = (db.query(Article)
+                           .join(ArticleCategory)
+                           .filter(ArticleCategory.category_id == category.id)
+                           .order_by(desc(Article.created_at))
+                           .limit(max_articles_per_category)
+                           .all())
+                if articles:
+                    articles_by_category[category.name] = articles
+                    
         return articles_by_category
     
     def should_send_digest(self, db: Session, user: User, digest_type: str) -> bool:
@@ -113,13 +130,13 @@ class DigestService:
         
         return recent_digest is None
     
-    def generate_daily_digest(self, db: Session, user: User) -> bool:
+    def generate_daily_digest(self, db: Session, user: User, ignore_schedule: bool = False) -> bool:
         """Generate and send daily digest for a user"""
         
-        if not self.should_send_digest(db, user, "daily"):
+        if not ignore_schedule and not self.should_send_digest(db, user, "daily"):
             return False
         
-        # Get articles from the last 24 hours
+        # Get articles for user
         articles_by_category = self.get_articles_for_user(db, user, days_back=1)
         
         if not articles_by_category:
@@ -152,10 +169,10 @@ class DigestService:
         
         return success
     
-    def generate_weekly_digest(self, db: Session, user: User) -> bool:
+    def generate_weekly_digest(self, db: Session, user: User, ignore_schedule: bool = False) -> bool:
         """Generate and send weekly digest for a user"""
         
-        if not self.should_send_digest(db, user, "weekly"):
+        if not ignore_schedule and not self.should_send_digest(db, user, "weekly"):
             return False
         
         # Get articles from the last 7 days

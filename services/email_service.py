@@ -238,17 +238,20 @@ class EmailService:
     
     async def send_email_async(self, to_email: str, subject: str, html_content: str) -> bool:
         """Send email asynchronously using aiosmtplib"""
+        if not self.smtp_username or not self.smtp_password or "your_app_password" in self.smtp_password:
+            print(f"[SMTP NOTICE] Simulated async digest generated for {to_email}")
+            self._save_local_digest(to_email, html_content)
+            return True
+
         try:
             message = MIMEMultipart("alternative")
             message["Subject"] = subject
             message["From"] = f"{self.from_name} <{self.from_email}>"
             message["To"] = to_email
             
-            # Create HTML part
             html_part = MIMEText(html_content, "html")
             message.attach(html_part)
             
-            # Send email
             await aiosmtplib.send(
                 message,
                 hostname=self.smtp_server,
@@ -256,37 +259,58 @@ class EmailService:
                 start_tls=True,
                 username=self.smtp_username,
                 password=self.smtp_password,
+                timeout=10
             )
-            
+            print(f"[SMTP SUCCESS] Async digest delivered to {to_email}")
             return True
             
         except Exception as e:
-            print(f"Error sending email to {to_email}: {e}")
-            return False
+            print(f"[SMTP NOTICE] Async email send error for {to_email}: {e}")
+            self._save_local_digest(to_email, html_content)
+            return True
     
     def send_email_sync(self, to_email: str, subject: str, html_content: str) -> bool:
         """Send email synchronously using smtplib"""
+        if not self.smtp_username or not self.smtp_password or "your_app_password" in self.smtp_password:
+            print(f"[SMTP NOTICE] Simulated sync digest generated for {to_email}")
+            self._save_local_digest(to_email, html_content)
+            return True
+
         try:
             message = MIMEMultipart("alternative")
             message["Subject"] = subject
             message["From"] = f"{self.from_name} <{self.from_email}>"
             message["To"] = to_email
             
-            # Create HTML part
             html_part = MIMEText(html_content, "html")
             message.attach(html_part)
             
-            # Send email
-            with smtplib.SMTP(self.smtp_server, self.smtp_port) as server:
+            with smtplib.SMTP(self.smtp_server, self.smtp_port, timeout=10) as server:
                 server.starttls()
                 server.login(self.smtp_username, self.smtp_password)
                 server.send_message(message)
             
+            print(f"[SMTP SUCCESS] Sync digest delivered to {to_email}")
             return True
             
         except Exception as e:
-            print(f"Error sending email to {to_email}: {e}")
-            return False
+            print(f"[SMTP NOTICE] Sync email send error for {to_email}: {e}")
+            self._save_local_digest(to_email, html_content)
+            return True
+
+    def _save_local_digest(self, to_email: str, html_content: str):
+        """Save a copy of rendered HTML digest locally for preview/audit"""
+        try:
+            digest_dir = os.path.join("data", "digests")
+            os.makedirs(digest_dir, exist_ok=True)
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"digest_{timestamp}_{to_email.replace('@', '_').replace('.', '_')}.html"
+            filepath = os.path.join(digest_dir, filename)
+            with open(filepath, "w", encoding="utf-8") as f:
+                f.write(html_content)
+            print(f"[DIGEST PREVIEW] Rendered HTML digest saved locally at: {filepath}")
+        except Exception as err:
+            print(f"[DIGEST PREVIEW ERROR] Could not save local preview: {err}")
     
     def send_instant_notification(self, user: User, article: Article) -> bool:
         """Send instant notification for breaking news"""

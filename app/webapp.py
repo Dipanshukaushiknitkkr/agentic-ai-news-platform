@@ -16,7 +16,7 @@ import requests
 # Import new modules
 from app.database import get_db, init_database
 from app.auth import authenticate_user, create_access_token, get_current_active_user, create_user, ACCESS_TOKEN_EXPIRE_MINUTES
-from app.models import User, Category, Article, UserSubscription, DigestLog
+from app.models import User, Category, Article, ArticleCategory, UserSubscription, DigestLog
 from app.schemas import *
 from services.digest_service import digest_service
 from services.categorization_service import categorizer
@@ -138,9 +138,34 @@ async def register(user_data: UserCreate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail=str(e))
 
 @app.post("/auth/token", response_model=Token)
-async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    """Login and get access token"""
-    user = authenticate_user(db, form_data.username, form_data.password)
+async def login(request: Request, db: Session = Depends(get_db)):
+    """Login and get access token - supports Form Data, JSON payloads, email, and username fields"""
+    username = None
+    password = None
+    
+    content_type = request.headers.get("content-type", "")
+    if "application/json" in content_type:
+        try:
+            body = await request.json()
+            username = body.get("username") or body.get("email")
+            password = body.get("password")
+        except Exception:
+            pass
+    else:
+        try:
+            form = await request.form()
+            username = form.get("username") or form.get("email")
+            password = form.get("password")
+        except Exception:
+            pass
+
+    if not username or not password:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Missing username/email or password"
+        )
+
+    user = authenticate_user(db, username, password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -290,9 +315,9 @@ async def send_digest_now(
 ):
     """Send digest immediately to the current user"""
     if digest_type == "daily":
-        success = digest_service.generate_daily_digest(db, current_user)
+        success = digest_service.generate_daily_digest(db, current_user, ignore_schedule=True)
     else:
-        success = digest_service.generate_weekly_digest(db, current_user)
+        success = digest_service.generate_weekly_digest(db, current_user, ignore_schedule=True)
     
     if success:
         return {"message": f"{digest_type.title()} digest sent successfully"}

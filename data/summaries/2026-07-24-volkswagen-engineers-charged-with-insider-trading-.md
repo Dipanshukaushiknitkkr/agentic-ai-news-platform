@@ -4,6 +4,6 @@
 
 **Link:** [https://techcrunch.com/2026/07/24/volkswagen-engineers-charged-with-insider-trading-tied-to-rivian-joint-venture/](https://techcrunch.com/2026/07/24/volkswagen-engineers-charged-with-insider-trading-tied-to-rivian-joint-venture/)
 
-**LLM Summary:** Volkswagen engineers have been charged with insider trading related to their company's joint venture with electric vehicle maker Rivian. The indictment alleges that the engineers used confidential information to buy Rivian stock, potentially giving them an unfair advantage in the market. This case highlights the risks of insider trading in the tech industry, where access to sensitive information can be lucrative.
+**LLM Summary:** Volkswagen engineers have been charged with insider trading related to a joint venture with Rivian. They allegedly used confidential information to buy Rivian stock, potentially gaining an unfair advantage. The indictment, unsealed recently, suggests a breach of trust and possible financial wrongdoing by those involved.
 
 The indictment, which was unsealed Friday, alleges the Volkswagen engineers used confidential insider information to buy stock in Rivian.

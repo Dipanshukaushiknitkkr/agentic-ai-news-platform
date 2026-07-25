@@ -213,9 +213,6 @@
             </ul>
 
             <div class="navbar-actions">
-                <button onclick="showAPIInfo()" class="btn btn-secondary">
-                    <i class="fa-solid fa-code"></i> Developers
-                </button>
                 <div id="authActions">
                     <button onclick="showAuthModal()" class="btn btn-primary">
                         <i class="fa-solid fa-user"></i> Login / Register
@@ -291,39 +288,7 @@
         </div>
     </main>
 
-    <!-- Developer API Modal -->
-    <div id="apiModal" class="modal">
-        <div class="modal-content glass-card">
-            <div class="modal-header">
-                <h3 class="brand"><i class="fa-solid fa-code"></i> Developer API</h3>
-                <button onclick="closeAPIModal()" class="modal-close">×</button>
-            </div>
-            <div style="margin-bottom: 20px;">
-                <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 16px;">Access our tech articles and metadata feeds directly in your own applications.</p>
-                
-                <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); padding: 16px; border-radius: 8px; margin-bottom: 16px;">
-                    <div class="input-label" style="margin-bottom: 4px;">BASE URL</div>
-                    <code style="color: var(--secondary); font-size: 13px; font-weight: bold;">http://localhost:8000</code>
-                </div>
-                
-                <h4 style="font-size: 14px; margin-bottom: 10px;">Endpoints:</h4>
-                <ul style="list-style: none; display: flex; flex-direction: column; gap: 8px;">
-                    <li style="font-size: 13px; padding: 10px; background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 6px;">
-                        <span style="color: var(--primary); font-weight: 700;">POST</span> <code>/auth/register</code> - Register User
-                    </li>
-                    <li style="font-size: 13px; padding: 10px; background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 6px;">
-                        <span style="color: var(--secondary); font-weight: 700;">GET</span> <code>/categories</code> - Get Categories
-                    </li>
-                    <li style="font-size: 13px; padding: 10px; background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 6px;">
-                        <span style="color: var(--secondary); font-weight: 700;">GET</span> <code>/preferences</code> - Get Preferences
-                    </li>
-                </ul>
-            </div>
-            <a href="/docs" class="btn btn-primary" style="width: 100%;" target="_blank">
-                <i class="fa-solid fa-circle-info"></i> View Interactive Docs
-            </a>
-        </div>
-    </div>
+
 
     <!-- Auth Modal -->
     <div id="authModal" class="modal">
@@ -435,12 +400,6 @@
         }
         function closeAuthModal() {
             toggleModal('authModal', false);
-        }
-        function showAPIInfo() {
-            toggleModal('apiModal', true);
-        }
-        function closeAPIModal() {
-            toggleModal('apiModal', false);
         }
 
         function showRegister() {
