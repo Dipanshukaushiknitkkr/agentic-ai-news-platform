@@ -27,13 +27,25 @@ def run():
     # step almost every time before it could write anything, which is why articles
     # were never actually refreshing. The recurring hourly refresh is handled by
     # scheduler_service.py; this is just a one-time "catch up now" run on startup.
-    update_cmd = [
-        python_exe, 
-        "-c", 
-        "from services.categorization_service import sync_articles; sync_articles()"
-    ]
+    update_script = (
+        "import sys; "
+        "print('[INFO] Background: Fetching latest articles...'); "
+        "try:\n"
+        "    from scrapers.techcrunch import fetch_and_save_techcrunch_articles\n"
+        "    fetch_and_save_techcrunch_articles()\n"
+        "    print('[SUCCESS] Background: Scraper finished.')\n"
+        "except Exception as e:\n"
+        "    print(f'[WARNING] Background: Scraper failed: {e}')\n"
+        "print('[INFO] Background: Syncing articles to database...'); "
+        "try:\n"
+        "    from services.categorization_service import categorizer\n"
+        "    categorizer.sync_articles_from_files()\n"
+        "    print('[SUCCESS] Background: Database sync finished.')\n"
+        "except Exception as e:\n"
+        "    print(f'[WARNING] Background: Database sync failed: {e}')\n"
+    )
 
-    update_process = subprocess.Popen(update_cmd)
+    update_process = subprocess.Popen([python_exe, "-c", update_script])
 
     # Launch uvicorn web server
     web_process = subprocess.Popen(uvicorn_cmd)
@@ -75,3 +87,8 @@ def run():
 
 if __name__ == "__main__":
     run()
+
+
+
+
+# .\.venv\Scripts\python.exe run_all.py

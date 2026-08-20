@@ -82,7 +82,7 @@ def get_llm_answer_groq(question, articles):
             "Content-Type": "application/json"
         }
         payload = {
-            "model": "llama-3.1-8b-instant",
+            "model": "llama-3.3-70b-versatile",
             "max_tokens": 200,
             "temperature": 0.7,
             "messages": [
@@ -186,6 +186,42 @@ async def login(request: Request, db: Session = Depends(get_db)):
         data={"sub": user.email}, expires_delta=access_token_expires
     )
     return {"access_token": access_token, "token_type": "bearer"}
+
+@app.post("/auth/google")
+async def google_login(request: Request, db: Session = Depends(get_db)):
+    """Authenticate user with Google OAuth2 ID Token"""
+    data = await request.json()
+    id_token = data.get("id_token")
+    if not id_token:
+        raise HTTPException(status_code=400, detail="Missing Google ID token")
+        
+    try:
+        resp = requests.get(f"https://oauth2.googleapis.com/tokeninfo?id_token={id_token}", timeout=10)
+        if resp.status_code != 200:
+            raise HTTPException(status_code=401, detail="Invalid Google token")
+            
+        payload = resp.json()
+        email = payload.get("email")
+        full_name = payload.get("name") or payload.get("given_name", "Google User")
+        
+        if not email:
+            raise HTTPException(status_code=400, detail="Google token missing email")
+            
+        user = get_user_by_email(db, email)
+        if not user:
+            import uuid
+            random_password = str(uuid.uuid4())
+            user = create_user(db, email, random_password, full_name)
+            
+        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token = create_access_token(
+            data={"sub": user.email}, expires_delta=access_token_expires
+        )
+        return {"access_token": access_token, "token_type": "bearer"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Google authentication failed: {str(e)}")
 
 @app.get("/auth/me", response_model=UserResponse)
 async def get_current_user_info(current_user: User = Depends(get_current_active_user)):

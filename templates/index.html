@@ -320,6 +320,18 @@
                 <button onclick="register()" class="btn btn-primary" style="width: 100%; margin-top: 10px;">
                     Create Account & Subscribe
                 </button>
+                
+                <div style="text-align: center; margin: 15px 0 10px 0; color: rgba(255,255,255,0.4); font-size: 11px; font-weight: 600; position: relative;">
+                    <span style="background: #1e2538; padding: 0 8px; z-index: 1; position: relative;">OR CONTINUE WITH</span>
+                    <div style="position: absolute; top: 50%; left: 0; right: 0; border-top: 1px solid rgba(255,255,255,0.1); z-index: 0;"></div>
+                </div>
+
+                <div id="g_id_onload"
+                     data-client_id="994573989780-ugud02vnsjftfirs1ee29i8k13th0pff.apps.googleusercontent.com"
+                     data-callback="handleGoogleSignIn"
+                     data-auto_prompt="false">
+                </div>
+                <div class="g_id_signin" data-type="standard" data-shape="rectangular" data-theme="filled_blue" data-text="signin_with" data-size="large" data-logo_alignment="left" style="width: 100%; display: flex; justify-content: center;"></div>
             </div>
 
             <!-- Login Form -->
@@ -335,6 +347,13 @@
                 <button onclick="login()" class="btn btn-primary" style="width: 100%; margin-top: 10px;">
                     Log In to Dashboard
                 </button>
+                
+                <div style="text-align: center; margin: 15px 0 10px 0; color: rgba(255,255,255,0.4); font-size: 11px; font-weight: 600; position: relative;">
+                    <span style="background: #1e2538; padding: 0 8px; z-index: 1; position: relative;">OR CONTINUE WITH</span>
+                    <div style="position: absolute; top: 50%; left: 0; right: 0; border-top: 1px solid rgba(255,255,255,0.1); z-index: 0;"></div>
+                </div>
+
+                <div class="g_id_signin" data-type="standard" data-shape="rectangular" data-theme="filled_blue" data-text="signin_with" data-size="large" data-logo_alignment="left" style="width: 100%; display: flex; justify-content: center;"></div>
             </div>
             
             <div id="authMessage" style="margin-top: 20px; padding: 12px; border-radius: 8px; font-size: 13px; font-weight: 500; display: none;"></div>
@@ -512,6 +531,32 @@
                 showMessage('Network error. Please try again.', true);
             }
         }
+
+        async function handleGoogleSignIn(response) {
+            try {
+                showMessage('Authenticating with Google...');
+                const res = await fetch('/auth/google', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id_token: response.credential })
+                });
+                
+                if (res.ok) {
+                    const data = await res.json();
+                    localStorage.setItem('authToken', data.access_token);
+                    showMessage('Google Sign-In successful! Redirecting...');
+                    setTimeout(() => {
+                        window.location.href = '/dashboard';
+                    }, 1000);
+                } else {
+                    const err = await res.json();
+                    showMessage(err.detail || 'Google Authentication failed', true);
+                }
+            } catch (error) {
+                showMessage('Google Authentication error. Please try again.', true);
+            }
+        }
     </script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
 </body>
 </html>
