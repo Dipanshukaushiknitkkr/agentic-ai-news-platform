@@ -70,7 +70,7 @@ def get_llm_summary_groq(title, summary, audience="general tech audience"):
         "Content-Type": "application/json"
     }
     payload = {
-        "model": "llama-3.3-70b-versatile",
+        "model": "openai/gpt-oss-120b",
         "max_tokens": 120,
         "temperature": 0.7,
         "messages": [
