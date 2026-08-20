@@ -15,7 +15,7 @@ import requests
 
 # Import new modules
 from app.database import get_db, init_database
-from app.auth import authenticate_user, create_access_token, get_current_active_user, create_user, ACCESS_TOKEN_EXPIRE_MINUTES
+from app.auth import authenticate_user, create_access_token, get_current_active_user, create_user, get_user_by_email, ACCESS_TOKEN_EXPIRE_MINUTES
 from app.models import User, Category, Article, ArticleCategory, UserSubscription, DigestLog
 from app.schemas import *
 from services.digest_service import digest_service
