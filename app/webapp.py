@@ -57,7 +57,7 @@ PLACEHOLDER_IMAGE = 'https://images.unsplash.com/photo-1518770660439-4636190af47
 # Helper: Get LLM answer from Groq
 
 def get_llm_answer_groq(question, articles):
-    api_key = os.getenv("GROQ_API_KEY")
+    api_key = os.getenv("GROQ_API_KEY") or os.getenv("GROK_API_KEY")
     
     use_fallback = False
     fallback_reason = ""
