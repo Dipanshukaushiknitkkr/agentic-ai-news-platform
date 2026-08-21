@@ -37,6 +37,12 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 templates = Jinja2Templates(directory="templates")
 
+@app.get("/ping")
+@app.get("/health")
+def health_check():
+    """Lightweight health check endpoint for keep-alive pingers"""
+    return {"status": "ok", "message": "Server active"}
+
 # Initialize database on startup
 @app.on_event("startup")
 async def startup_event():
@@ -75,7 +81,7 @@ def get_llm_answer_groq(question, articles):
             f"You are an expert tech news assistant.\n"
             f"Here are some recent tech news stories:\n{context}\n\n"
             f"User question: {question}\n"
-            f"Answer the user's question using only the information above."
+            f"Provide a clear, well-formatted response using bullet points and clean paragraph line breaks. Avoid single-line compressed tables."
         )
         headers = {
             "Authorization": f"Bearer {api_key}",

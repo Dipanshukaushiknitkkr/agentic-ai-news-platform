@@ -83,6 +83,44 @@
             border-bottom-left-radius: 4px;
         }
 
+        .agent .msg-bubble p {
+            margin: 0 0 8px 0;
+        }
+        .agent .msg-bubble p:last-child {
+            margin-bottom: 0;
+        }
+
+        .agent .msg-bubble table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0;
+            font-size: 13px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .agent .msg-bubble th, .agent .msg-bubble td {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            text-align: left;
+        }
+
+        .agent .msg-bubble th {
+            background: rgba(102, 126, 234, 0.15);
+            color: #818cf8;
+            font-weight: 600;
+        }
+
+        .agent .msg-bubble ul, .agent .msg-bubble ol {
+            margin: 8px 0;
+            padding-left: 20px;
+        }
+
+        .agent .msg-bubble li {
+            margin-bottom: 4px;
+        }
+
         .chat-input-area {
             padding: 20px;
             border-top: 1px solid var(--border-color);
@@ -249,11 +287,28 @@
             
             const bubble = document.createElement('div');
             bubble.className = 'msg-bubble';
-            bubble.textContent = text;
+            
+            if (sender === 'agent') {
+                if (typeof marked !== 'undefined') {
+                    bubble.innerHTML = marked.parse(text);
+                } else {
+                    let html = text
+                        .replace(/<br\s*\/?>/gi, '\n')
+                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                        .replace(/•\s*(.*?)(?=\n|$)/g, '<li>$1</li>')
+                        .replace(/\n\n/g, '</p><p>')
+                        .replace(/\n/g, '<br>');
+                    bubble.innerHTML = `<p>${html}</p>`;
+                }
+            } else {
+                bubble.textContent = text;
+            }
             
             wrapper.appendChild(bubble);
             chatLog.appendChild(wrapper);
         }
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </body>
 </html>
