@@ -270,8 +270,9 @@
                     <img src="{{ article.image_url or 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&auto=format&fit=crop&q=60' }}" class="article-image" alt="Article image">
                     
                     <div class="article-body">
-                        <div class="article-date">
-                            <i class="fa-regular fa-clock"></i> {{ article.published or 'Recently' }}
+                        <div class="article-date" style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+                            <span style="background: rgba(129, 140, 248, 0.15); color: #a5b4fc; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;"><i class="fa-solid fa-newspaper" style="margin-right: 4px;"></i> {{ article.source or 'Tech News' }}</span>
+                            <span><i class="fa-regular fa-clock"></i> {{ article.published or 'Recently' }}</span>
                         </div>
                         <div class="article-title">{{ article.title }}</div>
                         

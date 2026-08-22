@@ -463,6 +463,30 @@ async def dashboard(request: Request):
     """Serve the user dashboard for managing digest preferences"""
     return templates.TemplateResponse(request=request, name="dashboard.html", context={})
 
+from datetime import timezone, timedelta
+
+IST_TZ = timezone(timedelta(hours=5, minutes=30))
+
+def format_published_ist(pub_str, created_at_dt=None):
+    """Convert publication date or created_at timestamp to IST string (e.g. 23 Aug, 02:42 AM IST)"""
+    dt = None
+    if pub_str:
+        try:
+            from email.utils import parsedate_to_datetime
+            dt = parsedate_to_datetime(pub_str)
+        except Exception:
+            pass
+            
+    if not dt and created_at_dt:
+        dt = created_at_dt.replace(tzinfo=timezone.utc)
+        
+    if not dt:
+        dt = datetime.now(timezone.utc)
+        
+    # Convert to IST (UTC+5:30)
+    ist_dt = dt.astimezone(IST_TZ)
+    return ist_dt.strftime("%d %b, %I:%M %p IST")
+
 @app.get('/', response_class=HTMLResponse)
 def read_cards(request: Request, db: Session = Depends(get_db)):
     db_articles = db.query(Article).order_by(Article.created_at.desc()).all()
@@ -484,8 +508,9 @@ def read_cards(request: Request, db: Session = Depends(get_db)):
             'link': art.link,
             'summary': art.summary or '',
             'llm_summary': art.llm_summary or '',
-            'published': art.published or '',
+            'published': format_published_ist(art.published, art.created_at),
             'image_url': art.image_url or PLACEHOLDER_IMAGE,
+            'source': getattr(art, 'source', 'TechNews') or 'TechNews',
             'categories': [ac.category for ac in art.categories if ac.category]
         })
     return templates.TemplateResponse(request=request, name="index.html", context={"articles": articles})

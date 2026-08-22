@@ -104,70 +104,78 @@ def get_llm_summary_groq(title, summary, audience="general tech audience"):
     clean_summary = re.sub(r'<[^>]+>', '', summary).strip()
     return clean_summary[:200] + "..." if len(clean_summary) > 200 else clean_summary
 
-def fetch_and_save_techcrunch_articles():
-    FEED_URL = 'https://techcrunch.com/feed/'
+FEEDS = [
+    {'name': 'TechCrunch', 'url': 'https://techcrunch.com/feed/'},
+    {'name': 'The Verge', 'url': 'https://www.theverge.com/rss/index.xml'},
+    {'name': 'Wired', 'url': 'https://www.wired.com/feed/rss'},
+    {'name': 'Ars Technica', 'url': 'https://feeds.arstechnica.com/arstechnica/index'}
+]
+
+def fetch_and_save_all_sources():
     SAVE_DIR = 'data/summaries/'
     os.makedirs(SAVE_DIR, exist_ok=True)
     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'}
-    response = requests.get(FEED_URL, headers=headers, timeout=10)
-    if response.status_code != 200:
-        print(f"Failed to fetch feed: {response.status_code}")
-        return
-    feed = feedparser.parse(response.content)
-    print(f"Fetched {len(feed.entries)} entries from TechCrunch RSS feed.")
     
-    new_articles_count = 0
-    for entry in feed.entries:
-        title = entry.title
-        link = entry.link
-        summary = entry.summary if hasattr(entry, 'summary') else ''
-        published = entry.published if hasattr(entry, 'published') else ''
+    total_new_articles = 0
+    
+    for feed_info in FEEDS:
+        source_name = feed_info['name']
+        feed_url = feed_info['url']
         
-        date_str = ''
-        if published:
-            try:
-                date_obj = datetime(*entry.published_parsed[:6])
-                date_str = date_obj.strftime('%Y-%m-%d')
-            except Exception:
-                date_str = datetime.now().strftime('%Y-%m-%d')
-        else:
-            date_str = datetime.now().strftime('%Y-%m-%d')
+        try:
+            response = requests.get(feed_url, headers=headers, timeout=10)
+            if response.status_code != 200:
+                print(f"[{source_name}] Failed to fetch feed: {response.status_code}")
+                continue
+                
+            feed = feedparser.parse(response.content)
+            print(f"Fetched {len(feed.entries)} entries from {source_name} RSS feed.")
+            
+            for entry in feed.entries[:8]:  # Process top 8 entries per source
+                title = entry.title
+                link = entry.link
+                summary = entry.summary if hasattr(entry, 'summary') else ''
+                published = entry.published if hasattr(entry, 'published') else (entry.updated if hasattr(entry, 'updated') else '')
+                
+                date_str = ''
+                if hasattr(entry, 'published_parsed') and entry.published_parsed:
+                    try:
+                        date_obj = datetime(*entry.published_parsed[:6])
+                        date_str = date_obj.strftime('%Y-%m-%d')
+                    except Exception:
+                        date_str = datetime.now().strftime('%Y-%m-%d')
+                else:
+                    date_str = datetime.now().strftime('%Y-%m-%d')
 
-        filename_base = f"{date_str}-{slugify(title)[:50]}"
-        json_filepath = os.path.join(SAVE_DIR, f"{filename_base}.json")
-        
-        # Skip if already downloaded and processed!
-        if os.path.exists(json_filepath):
-            continue
+                filename_base = f"{date_str}-{slugify(source_name)}-{slugify(title)[:45]}"
+                json_filepath = os.path.join(SAVE_DIR, f"{filename_base}.json")
+                
+                if os.path.exists(json_filepath):
+                    continue
+                    
+                image_url = extract_image_url(entry)
+                llm_summary = get_llm_summary_groq(title, summary)
+                time.sleep(0.5)
+                
+                with open(json_filepath, 'w', encoding='utf-8') as jf:
+                    json.dump({
+                        'title': title,
+                        'link': link,
+                        'summary': summary,
+                        'published': published,
+                        'image_url': image_url,
+                        'llm_summary': llm_summary,
+                        'source': source_name
+                    }, jf, ensure_ascii=False, indent=2)
+                    
+                total_new_articles += 1
+        except Exception as e:
+            print(f"Error scraping {source_name}: {e}")
             
-        # Process new article
-        image_url = extract_image_url(entry)
-        llm_summary = get_llm_summary_groq(title, summary)
-        time.sleep(1)  # Respect rate limits (1s delay between new requests)
-        
-        # Save markdown
-        md_filepath = os.path.join(SAVE_DIR, f"{filename_base}.md")
-        with open(md_filepath, 'w', encoding='utf-8') as f:
-            f.write(f"# {title}\n\n")
-            f.write(f"**Published:** {published}\n\n")
-            f.write(f"**Link:** [{link}]({link})\n\n")
-            f.write(f"**LLM Summary:** {llm_summary}\n\n")
-            f.write(f"{summary}\n")
-            
-        # Save JSON with metadata
-        with open(json_filepath, 'w', encoding='utf-8') as jf:
-            json.dump({
-                'title': title,
-                'link': link,
-                'summary': summary,
-                'published': published,
-                'image_url': image_url,
-                'llm_summary': llm_summary
-            }, jf, ensure_ascii=False, indent=2)
-            
-        new_articles_count += 1
-        
-    print(f"Done writing articles. Processed {new_articles_count} new entries.")
+    print(f"Multi-source scraping complete. Processed {total_new_articles} new entries.")
+
+def fetch_and_save_techcrunch_articles():
+    fetch_and_save_all_sources()
 
 if __name__ == "__main__":
-    fetch_and_save_techcrunch_articles()
+    fetch_and_save_all_sources()

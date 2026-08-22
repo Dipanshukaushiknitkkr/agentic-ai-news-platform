@@ -37,6 +37,15 @@ def init_database():
     """Initialize database and create default categories"""
     Base.metadata.create_all(bind=engine)
     
+    # Auto-migration: Ensure source column exists on articles table
+    try:
+        from sqlalchemy import text
+        with engine.connect() as conn:
+            conn.execute(text("ALTER TABLE articles ADD COLUMN source VARCHAR DEFAULT 'TechNews'"))
+            conn.commit()
+    except Exception:
+        pass  # Column already exists
+    
     # Create default categories
     db = SessionLocal()
     try:

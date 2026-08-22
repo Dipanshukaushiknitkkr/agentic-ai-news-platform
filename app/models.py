@@ -59,6 +59,7 @@ class Article(Base):
     llm_summary = Column(Text, nullable=True)
     published = Column(String, nullable=True)
     image_url = Column(String, nullable=True)
+    source = Column(String, default="TechNews")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
     # Relationships
