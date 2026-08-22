@@ -43,18 +43,30 @@ def health_check():
     """Lightweight health check endpoint for keep-alive pingers"""
     return {"status": "ok", "message": "Server active"}
 
-# Initialize database on startup
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+
+scheduler = AsyncIOScheduler()
+
+def scheduled_news_scrape_job():
+    try:
+        print("[SCHEDULER] Running background TechCrunch scrape & sync...")
+        fetch_and_save_techcrunch_articles()
+        categorizer.sync_articles_from_files()
+        categorizer.cleanup_old_articles(days=7)
+    except Exception as e:
+        print(f"[SCHEDULER ERROR]: {e}")
+
+# Initialize database and background scheduler on startup
 @app.on_event("startup")
 async def startup_event():
     init_database()
-    # Fetch today's articles so the app always opens with fresh news,
-    # then load new files into the DB and drop anything older than 7 days.
-    try:
-        fetch_and_save_techcrunch_articles()
-    except Exception as e:
-        print(f"Startup scrape failed: {e}")
-    categorizer.sync_articles_from_files()
-    categorizer.cleanup_old_articles(days=7)
+    # Initial scrape on startup
+    scheduled_news_scrape_job()
+    # Schedule hourly background news scraping
+    if not scheduler.running:
+        scheduler.add_job(scheduled_news_scrape_job, 'interval', hours=1, id='hourly_news_scrape', replace_existing=True)
+        scheduler.start()
+        print("[SCHEDULER] Background news scraper running 24/7 every 1 hour.")
 
 SUMMARIES_DIR = 'data/summaries/'
 PLACEHOLDER_IMAGE = 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&auto=format&fit=crop&q=60'
