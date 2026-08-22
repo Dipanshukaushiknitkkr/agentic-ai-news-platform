@@ -15,7 +15,7 @@ import requests
 
 # Import new modules
 from app.database import get_db, init_database
-from app.auth import authenticate_user, create_access_token, get_current_active_user, create_user, get_user_by_email, ACCESS_TOKEN_EXPIRE_MINUTES
+from app.auth import authenticate_user, create_access_token, get_current_active_user, get_current_admin_user, create_user, get_user_by_email, ACCESS_TOKEN_EXPIRE_MINUTES
 from app.models import User, Category, Article, ArticleCategory, UserSubscription, DigestLog
 from app.schemas import *
 from services.digest_service import digest_service
@@ -544,3 +544,51 @@ async def chat_endpoint(request: Request):
     relevant_articles = select_relevant_articles(search_query, articles, top_n=5)
     answer = get_llm_answer_groq(question, relevant_articles, history=history)
     return JSONResponse({"answer": answer})
+
+# Admin Control Panel Endpoints
+@app.get("/admin", response_class=HTMLResponse)
+def admin_page(request: Request):
+    """Serve the Admin Control Panel"""
+    return templates.TemplateResponse(request=request, name="admin.html", context={})
+
+@app.get("/api/admin/stats")
+async def get_admin_stats(db: Session = Depends(get_db), admin: User = Depends(get_current_admin_user)):
+    """Get live admin system statistics"""
+    total_users = db.query(User).count()
+    total_articles = db.query(Article).count()
+    
+    # Publisher Breakdown
+    from sqlalchemy import func
+    sources = db.query(Article.source, func.count(Article.id)).group_by(Article.source).all()
+    publisher_counts = {source or "TechNews": count for source, count in sources}
+    
+    return {
+        "total_users": total_users,
+        "total_articles": total_articles,
+        "publisher_counts": publisher_counts,
+        "scheduler_active": scheduler.running
+    }
+
+@app.post("/api/admin/trigger-scrape")
+async def trigger_manual_scrape(admin: User = Depends(get_current_admin_user)):
+    """Trigger manual multi-source RSS scraping and categorization"""
+    try:
+        from scrapers.techcrunch import fetch_and_save_all_sources
+        fetch_and_save_all_sources()
+        categorizer.sync_articles_from_files()
+        categorizer.cleanup_old_articles(days=7)
+        return {"status": "success", "message": "Multi-source scrape and categorization completed successfully!"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Scrape execution failed: {str(e)}")
+
+@app.delete("/api/admin/articles/{article_id}")
+async def delete_article_admin(article_id: str, db: Session = Depends(get_db), admin: User = Depends(get_current_admin_user)):
+    """Delete an article from database as admin"""
+    article = db.query(Article).filter(Article.id == article_id).first()
+    if not article:
+        raise HTTPException(status_code=404, detail="Article not found")
+    
+    db.query(ArticleCategory).filter(ArticleCategory.article_id == article_id).delete()
+    db.delete(article)
+    db.commit()
+    return {"status": "success", "message": f"Article {article_id} deleted successfully."}

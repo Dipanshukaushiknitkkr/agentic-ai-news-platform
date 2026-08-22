@@ -373,6 +373,19 @@
                     <i class="fa-solid fa-chart-line"></i> Dashboard
                 </a>
             `;
+            fetch('/auth/me', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            }).then(res => res.json()).then(user => {
+                if (user && user.is_admin) {
+                    const navList = document.querySelector('.nav-links');
+                    if (navList && !document.getElementById('adminLink')) {
+                        const adminItem = document.createElement('li');
+                        adminItem.id = 'adminLink';
+                        adminItem.innerHTML = '<a href="/admin" class="nav-link" style="color: #f59e0b; font-weight: 600;"><i class="fa-solid fa-crown"></i> Admin</a>';
+                        navList.appendChild(adminItem);
+                    }
+                }
+            }).catch(() => {});
         }
 
         // Frontend Client Filters

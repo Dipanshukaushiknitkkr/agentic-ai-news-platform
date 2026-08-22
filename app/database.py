@@ -37,14 +37,34 @@ def init_database():
     """Initialize database and create default categories"""
     Base.metadata.create_all(bind=engine)
     
-    # Auto-migration: Ensure source column exists on articles table
+    # Auto-migration: Ensure columns exist
     try:
         from sqlalchemy import text
         with engine.connect() as conn:
             conn.execute(text("ALTER TABLE articles ADD COLUMN source VARCHAR DEFAULT 'TechNews'"))
             conn.commit()
     except Exception:
-        pass  # Column already exists
+        pass
+        
+    try:
+        from sqlalchemy import text
+        with engine.connect() as conn:
+            conn.execute(text("ALTER TABLE users ADD COLUMN is_admin BOOLEAN DEFAULT FALSE"))
+            conn.commit()
+    except Exception:
+        pass
+        
+    # Auto-provision admin privileges for admin email
+    try:
+        from app.models import User
+        db_admin = SessionLocal()
+        admin_user = db_admin.query(User).filter(User.email == "18dkkaushik@gmail.com").first()
+        if admin_user and not admin_user.is_admin:
+            admin_user.is_admin = True
+            db_admin.commit()
+        db_admin.close()
+    except Exception as e:
+        print(f"Admin provisioning note: {e}")
     
     # Create default categories
     db = SessionLocal()

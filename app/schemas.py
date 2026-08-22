@@ -13,6 +13,7 @@ class UserResponse(BaseModel):
     email: str
     full_name: Optional[str]
     is_active: bool
+    is_admin: bool = False
     daily_digest_enabled: bool
     weekly_digest_enabled: bool
     instant_notifications: bool

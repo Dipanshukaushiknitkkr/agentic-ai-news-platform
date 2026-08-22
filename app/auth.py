@@ -95,6 +95,15 @@ async def get_current_active_user(current_user: User = Depends(get_current_user)
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
 
+async def get_current_admin_user(current_user: User = Depends(get_current_active_user)):
+    """Get current admin user, block non-admins with 403 Forbidden"""
+    if not current_user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin privileges required"
+        )
+    return current_user
+
 def create_user(db: Session, email: str, password: str, full_name: str = None):
     """Create a new user"""
     normalized_email = email.lower().strip()
