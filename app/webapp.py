@@ -74,7 +74,7 @@ PLACEHOLDER_IMAGE = 'https://images.unsplash.com/photo-1518770660439-4636190af47
 
 # Helper: Get LLM answer from Groq
 
-def get_llm_answer_groq(question, articles):
+def get_llm_answer_groq(question, articles, history=None):
     api_key = os.getenv("GROQ_API_KEY") or os.getenv("GROK_API_KEY")
     
     use_fallback = False
@@ -89,23 +89,41 @@ def get_llm_answer_groq(question, articles):
         context = "\n\n".join([
             f"Title: {a['title']}\nAI Summary: {a.get('llm_summary','')}" for a in articles[:5]
         ])
-        prompt = (
-            f"You are an expert tech news assistant.\n"
-            f"Here are some recent tech news stories:\n{context}\n\n"
-            f"User question: {question}\n"
-            f"Provide a clear, well-formatted response using bullet points and clean paragraph line breaks. Avoid single-line compressed tables."
+        
+        system_instruction = (
+            "You are an expert AI Tech Assistant, company advisor, and news expert.\n"
+            "Here is the recent tech news context retrieved from our database:\n"
+            f"{context}\n\n"
+            "Instructions:\n"
+            "1. Use the retrieved tech news above as primary evidence for real-time news questions.\n"
+            "2. Answer follow-up questions, general knowledge cross-questions, and background details about companies, founders, history, or technology seamlessly using your general knowledge.\n"
+            "3. Maintain full conversation context with the user across follow-up questions.\n"
+            "4. Provide a clear, well-formatted response using bullet points and clean paragraph line breaks. Avoid single-line compressed tables."
         )
+        
         headers = {
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json"
         }
+        
+        messages = [{"role": "system", "content": system_instruction}]
+        
+        # Append conversation history turns
+        if history and isinstance(history, list):
+            for turn in history[-8:]:  # Keep up to 4 conversation turns (8 messages)
+                role = turn.get("role", "user")
+                content = turn.get("content", "")
+                if role in ["user", "assistant"] and content:
+                    messages.append({"role": role, "content": content})
+                    
+        # Append current user question
+        messages.append({"role": "user", "content": question})
+        
         payload = {
             "model": "openai/gpt-oss-120b",
-            "max_tokens": 200,
+            "max_tokens": 400,
             "temperature": 0.7,
-            "messages": [
-                {"role": "user", "content": prompt}
-            ]
+            "messages": messages
         }
         try:
             response = requests.post(
@@ -480,6 +498,8 @@ def chat_page(request: Request):
 async def chat_endpoint(request: Request):
     data = await request.json()
     question = data.get('question', '')
+    history = data.get('history', [])
+    
     # Load all articles
     articles = []
     if os.path.exists(SUMMARIES_DIR):
@@ -488,7 +508,14 @@ async def chat_endpoint(request: Request):
                 with open(os.path.join(SUMMARIES_DIR, filename), 'r', encoding='utf-8') as f:
                     article = json.load(f)
                 articles.append(article)
-    # Select most relevant articles for the question
-    relevant_articles = select_relevant_articles(question, articles, top_n=5)
-    answer = get_llm_answer_groq(question, relevant_articles)
+                
+    # Combine question with previous user message for search context
+    search_query = question
+    if history and isinstance(history, list):
+        user_turns = [h.get('content', '') for h in history if h.get('role') == 'user']
+        if user_turns:
+            search_query = f"{user_turns[-1]} {question}"
+            
+    relevant_articles = select_relevant_articles(search_query, articles, top_n=5)
+    answer = get_llm_answer_groq(question, relevant_articles, history=history)
     return JSONResponse({"answer": answer})

@@ -245,6 +245,8 @@
             }
         }
 
+        let conversationHistory = [];
+
         async function sendQuestion() {
             const query = userInput.value.trim();
             if (!query) return;
@@ -261,7 +263,10 @@
                 const response = await fetch('/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ question: query })
+                    body: JSON.stringify({ 
+                        question: query,
+                        history: conversationHistory 
+                    })
                 });
 
                 // Hide Typing Indicator
@@ -270,6 +275,13 @@
                 if (response.ok) {
                     const data = await response.json();
                     renderBubble(data.answer, 'agent');
+                    
+                    // Maintain conversation history turns
+                    conversationHistory.push({ role: 'user', content: query });
+                    conversationHistory.push({ role: 'assistant', content: data.answer });
+                    if (conversationHistory.length > 10) {
+                        conversationHistory = conversationHistory.slice(-10);
+                    }
                 } else {
                     renderBubble('I encountered an error connecting to my knowledge base. Please try again.', 'agent');
                 }
