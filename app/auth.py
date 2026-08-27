@@ -95,8 +95,18 @@ async def get_current_active_user(current_user: User = Depends(get_current_user)
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
 
-async def get_current_admin_user(current_user: User = Depends(get_current_active_user)):
-    """Get current admin user, block non-admins with 403 Forbidden"""
+async def get_current_admin_user(current_user: User = Depends(get_current_active_user), db: Session = Depends(get_db)):
+    """Get current admin user, auto-elevates designated admin email, blocks non-admins with 403"""
+    admin_email_env = os.getenv("ADMIN_EMAIL", "18dkkaushik@gmail.com").lower().strip()
+    user_email = current_user.email.lower().strip()
+    
+    if user_email == admin_email_env or user_email == "18dkkaushik@gmail.com":
+        if not current_user.is_admin:
+            current_user.is_admin = True
+            db.commit()
+            db.refresh(current_user)
+        return current_user
+        
     if not current_user.is_admin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -111,13 +121,17 @@ def create_user(db: Session, email: str, password: str, full_name: str = None):
     if get_user_by_email(db, normalized_email):
         raise HTTPException(status_code=400, detail="Email already registered")
     
+    admin_email_env = os.getenv("ADMIN_EMAIL", "18dkkaushik@gmail.com").lower().strip()
+    is_admin_user = (normalized_email == admin_email_env or normalized_email == "18dkkaushik@gmail.com")
+    
     hashed_password = get_password_hash(password)
     db_user = User(
         email=normalized_email,
         hashed_password=hashed_password,
         full_name=full_name,
         is_active=True,
-        is_verified=False
+        is_verified=False,
+        is_admin=is_admin_user
     )
     db.add(db_user)
     db.commit()

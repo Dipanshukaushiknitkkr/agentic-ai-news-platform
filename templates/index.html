@@ -484,17 +484,14 @@
             text-transform: uppercase;
             letter-spacing: 0.6px;
             color: var(--secondary);
-            margin-bottom: 6px;
+            margin-bottom: 8px;
         }
 
         .ai-summary-content {
             font-size: 13.5px;
             color: #f1f5f9;
-            line-height: 1.55;
-            display: -webkit-box;
-            -webkit-line-clamp: 3;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
+            line-height: 1.6;
+            white-space: normal;
         }
 
         .article-footer {
@@ -650,13 +647,13 @@
 
                         <div class="article-title">{{ article.title }}</div>
                         
-                        <!-- Focused AI Key Takeaway Summary Box -->
+                        <!-- Full AI Summary Box -->
                         <div class="ai-summary-card">
                             <div class="ai-summary-header">
-                                <i class="fa-solid fa-wand-magic-sparkles"></i> Groq AI Key Takeaway
+                                <i class="fa-solid fa-wand-magic-sparkles"></i> Summary
                             </div>
                             <div class="ai-summary-content">
-                                {{ article.llm_summary if article.llm_summary else article.summary[:180] ~ '...' }}
+                                {{ article.llm_summary if article.llm_summary else article.summary }}
                             </div>
                         </div>
 

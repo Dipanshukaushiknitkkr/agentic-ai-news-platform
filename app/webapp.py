@@ -47,21 +47,28 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 scheduler = AsyncIOScheduler()
 
+import asyncio
+
 def scheduled_news_scrape_job():
     try:
-        print("[SCHEDULER] Running background TechCrunch scrape & sync...")
-        fetch_and_save_techcrunch_articles()
+        print("[SCHEDULER] Running background multi-source scrape & sync...")
+        from scrapers.techcrunch import fetch_and_save_all_sources
+        fetch_and_save_all_sources()
         categorizer.sync_articles_from_files()
         categorizer.cleanup_old_articles(days=7)
     except Exception as e:
         print(f"[SCHEDULER ERROR]: {e}")
 
-# Initialize database and background scheduler on startup
+async def run_initial_scrape_async():
+    """Run initial scrape in background thread without blocking server start"""
+    await asyncio.to_thread(scheduled_news_scrape_job)
+
+# Initialize database and background scheduler on startup (Non-blocking)
 @app.on_event("startup")
 async def startup_event():
     init_database()
-    # Initial scrape on startup
-    scheduled_news_scrape_job()
+    # Trigger background scrape asynchronously without blocking port binding or HTTP responses
+    asyncio.create_task(run_initial_scrape_async())
     # Schedule hourly background news scraping
     if not scheduler.running:
         scheduler.add_job(scheduled_news_scrape_job, 'interval', hours=1, id='hourly_news_scrape', replace_existing=True)
@@ -491,19 +498,26 @@ def format_published_ist(pub_str, created_at_dt=None):
     ist_dt = dt.astimezone(IST_TZ)
     return ist_dt.strftime("%d %b, %I:%M %p IST")
 
+from sqlalchemy.orm import joinedload
+
 @app.get('/', response_class=HTMLResponse)
 def read_cards(request: Request, db: Session = Depends(get_db)):
-    db_articles = db.query(Article).order_by(Article.created_at.desc()).all()
+    db_articles = (
+        db.query(Article)
+        .options(joinedload(Article.categories).joinedload(ArticleCategory.category))
+        .order_by(Article.created_at.desc())
+        .limit(60)
+        .all()
+    )
     if not db_articles:
         categorizer.sync_articles_from_files()
-        db_articles = db.query(Article).order_by(Article.created_at.desc()).all()
-    if not db_articles:
-        try:
-            fetch_and_save_techcrunch_articles()
-            categorizer.sync_articles_from_files()
-            db_articles = db.query(Article).order_by(Article.created_at.desc()).all()
-        except Exception as e:
-            print(f"Fallback article fetch failed: {e}")
+        db_articles = (
+            db.query(Article)
+            .options(joinedload(Article.categories).joinedload(ArticleCategory.category))
+            .order_by(Article.created_at.desc())
+            .limit(60)
+            .all()
+        )
             
     articles = []
     for art in db_articles:

@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Operations Portal - Agentic AI News</title>
+    <title>Admin Operations Portal — TechCore</title>
     <!-- Google Fonts & FontAwesome -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/static/css/style.css">
     <style>
@@ -24,20 +24,21 @@
         }
 
         .stat-card {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
+            background: rgba(12, 10, 30, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 18px;
             padding: 24px;
             display: flex;
             align-items: center;
-            gap: 16px;
+            gap: 18px;
+            backdrop-filter: blur(16px);
         }
 
         .stat-icon {
             width: 54px;
             height: 54px;
             border-radius: 14px;
-            background: rgba(102, 126, 234, 0.15);
+            background: rgba(168, 85, 247, 0.15);
             color: var(--primary);
             display: flex;
             align-items: center;
@@ -59,23 +60,25 @@
         }
 
         .control-panel {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
+            background: rgba(12, 10, 30, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 18px;
             padding: 28px;
             margin-bottom: 30px;
+            backdrop-filter: blur(16px);
         }
 
         .pub-badge {
             display: inline-block;
             background: rgba(129, 140, 248, 0.15);
             color: #a5b4fc;
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 12px;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 13px;
             font-weight: 600;
-            margin-right: 8px;
-            margin-bottom: 8px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            border: 1px solid rgba(129, 140, 248, 0.25);
         }
 
         .alert-box {
@@ -86,39 +89,96 @@
             margin-top: 15px;
             display: none;
         }
+
+        .admin-login-card {
+            max-width: 440px;
+            margin: 40px auto;
+            padding: 36px;
+            border-radius: 20px;
+            background: rgba(12, 10, 30, 0.85);
+            border: 1px solid rgba(168, 85, 247, 0.3);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(168, 85, 247, 0.2);
+            text-align: center;
+        }
     </style>
 </head>
 <body>
     <!-- Navbar -->
     <nav class="navbar">
-        <div class="container nav-container">
+        <div class="container navbar-container">
             <a href="/" class="brand">
-                <i class="fa-solid fa-bolt brand-icon"></i>
-                <span>Agentic AI News</span>
+                <i class="fa-solid fa-bolt-lightning" style="color: var(--secondary);"></i>
+                TECH<span>CORE</span>
             </a>
             
-            <div class="nav-links">
-                <a href="/" class="nav-btn"><i class="fa-solid fa-house"></i> Home</a>
-                <a href="/dashboard" class="nav-btn"><i class="fa-solid fa-sliders"></i> Dashboard</a>
-                <a href="/chat" class="nav-btn"><i class="fa-solid fa-robot"></i> AI Assistant</a>
-                <a href="/admin" class="nav-btn active" style="background: rgba(102, 126, 234, 0.2); border-color: var(--primary);"><i class="fa-solid fa-crown" style="color: #f59e0b;"></i> Admin</a>
+            <ul class="nav-links">
+                <li><a href="/" class="nav-link"><i class="fa-solid fa-compass"></i> Explore</a></li>
+                <li><a href="/chat" class="nav-link"><i class="fa-solid fa-brain"></i> AI Assistant</a></li>
+                <li><a href="/dashboard" class="nav-link"><i class="fa-solid fa-sliders"></i> Dashboard</a></li>
+                <li><a href="/admin" class="nav-link active" style="color: #f59e0b; font-weight: 700;"><i class="fa-solid fa-crown"></i> Admin</a></li>
+            </ul>
+
+            <div class="navbar-actions">
+                <a href="/" class="btn btn-secondary"><i class="fa-solid fa-arrow-left"></i> Back to Site</a>
             </div>
         </div>
     </nav>
 
     <!-- Main Admin Container -->
-    <main class="container" style="padding-top: 40px; padding-bottom: 60px;">
-        <div id="accessDenied" style="display: none; text-align: center; padding: 60px 20px;" class="glass-card">
-            <i class="fa-solid fa-shield-halved" style="font-size: 54px; color: #ef4444; margin-bottom: 20px;"></i>
-            <h2>Admin Access Restricted</h2>
-            <p style="color: var(--text-muted); margin: 12px 0 24px 0;">You must be logged in as an Admin account (18dkkaushik@gmail.com) to access this portal.</p>
-            <a href="/" class="btn btn-primary">Return to Homepage</a>
+    <main class="container" style="padding-top: 110px; padding-bottom: 60px;">
+        
+        <!-- Interactive Inline Admin Login Form (if not authenticated) -->
+        <div id="adminLoginSection" class="admin-login-card" style="display: none;">
+            <div style="width: 60px; height: 60px; border-radius: 16px; background: rgba(245, 158, 11, 0.15); color: #f59e0b; display: flex; align-items: center; justify-content: center; font-size: 28px; margin: 0 auto 18px auto;">
+                <i class="fa-solid fa-crown"></i>
+            </div>
+            <h2 style="font-family: var(--font-heading); font-size: 24px; margin-bottom: 6px;">Admin Authentication</h2>
+            <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 24px;">Sign in with your designated admin email (<strong>18dkkaushik@gmail.com</strong>) to unlock system controls.</p>
+
+            <div class="input-group" style="text-align: left;">
+                <span class="input-label">Email Address</span>
+                <input type="email" id="adminEmailInput" class="input-field" placeholder="18dkkaushik@gmail.com" value="18dkkaushik@gmail.com">
+            </div>
+
+            <div class="input-group" style="text-align: left;">
+                <span class="input-label">Password</span>
+                <input type="password" id="adminPassInput" class="input-field" placeholder="Enter your password">
+            </div>
+
+            <button onclick="loginAdminDirectly()" class="btn btn-primary" style="width: 100%; padding: 12px; margin-top: 10px; font-size: 14px;">
+                <i class="fa-solid fa-key"></i> Sign In to Admin Portal
+            </button>
+
+            <div style="text-align: center; margin: 18px 0 14px 0; color: rgba(255,255,255,0.4); font-size: 11px; font-weight: 600; position: relative;">
+                <span style="background: #0c0a1e; padding: 0 10px; z-index: 1; position: relative;">OR SIGN IN WITH GOOGLE</span>
+                <div style="position: absolute; top: 50%; left: 0; right: 0; border-top: 1px solid rgba(255,255,255,0.1); z-index: 0;"></div>
+            </div>
+
+            <div id="g_id_onload"
+                 data-client_id="994573989780-ugud02vnsjftfirs1ee29i8k13th0pff.apps.googleusercontent.com"
+                 data-callback="handleAdminGoogleLogin"
+                 data-auto_prompt="false">
+            </div>
+            <div class="g_id_signin" data-type="standard" data-shape="rectangular" data-theme="filled_blue" data-text="signin_with" data-size="large" data-logo_alignment="left" style="width: 100%; display: flex; justify-content: center;"></div>
+
+            <div id="adminLoginAlert" class="alert-box" style="margin-top: 18px;"></div>
         </div>
 
+        <!-- Access Denied (Non-Admin User) -->
+        <div id="accessDenied" style="display: none; text-align: center; padding: 60px 20px;" class="glass-card">
+            <i class="fa-solid fa-shield-halved" style="font-size: 54px; color: #ef4444; margin-bottom: 20px;"></i>
+            <h2>Admin Privilege Required</h2>
+            <p style="color: var(--text-muted); margin: 12px 0 24px 0;">Your account does not have admin permissions. Please sign in as <strong>18dkkaushik@gmail.com</strong>.</p>
+            <button onclick="logoutAndShowLogin()" class="btn btn-primary"><i class="fa-solid fa-arrow-right-to-bracket"></i> Switch Account</button>
+        </div>
+
+        <!-- Authorized Admin Control Panel -->
         <div id="adminContent" style="display: none;">
             <div class="admin-header">
                 <div>
-                    <h1 style="font-size: 28px; font-weight: 700; margin-bottom: 4px;"><i class="fa-solid fa-crown" style="color: #f59e0b;"></i> Admin Operations Control</h1>
+                    <h1 style="font-family: var(--font-heading); font-size: 28px; font-weight: 800; margin-bottom: 4px;">
+                        <i class="fa-solid fa-crown" style="color: #f59e0b;"></i> Admin Operations Control
+                    </h1>
                     <p style="color: var(--text-muted); font-size: 14px;">Manage multi-source scraping, live background schedulers, and database metrics.</p>
                 </div>
             </div>
@@ -134,7 +194,7 @@
                 </div>
 
                 <div class="stat-card">
-                    <div class="stat-icon"><i class="fa-solid fa-newspaper"></i></div>
+                    <div class="stat-icon" style="color: #38bdf8; background: rgba(56, 189, 248, 0.15);"><i class="fa-solid fa-newspaper"></i></div>
                     <div>
                         <div class="stat-val" id="statArticles">0</div>
                         <div class="stat-lbl">Database Articles</div>
@@ -144,20 +204,22 @@
                 <div class="stat-card">
                     <div class="stat-icon" style="color: #10b981; background: rgba(16, 185, 129, 0.15);"><i class="fa-solid fa-clock-rotate-left"></i></div>
                     <div>
-                        <div class="stat-val" id="statScheduler" style="color: #10b981;">Active</div>
-                        <div class="stat-lbl">24/7 Hourly Scraper</div>
+                        <div class="stat-val" id="statScheduler" style="color: #10b981;">Active 24/7</div>
+                        <div class="stat-lbl">Background News Scheduler</div>
                     </div>
                 </div>
             </div>
 
             <!-- Controls Panel -->
             <div class="control-panel glass-card">
-                <h3 style="font-size: 18px; margin-bottom: 12px;"><i class="fa-solid fa-gears" style="color: var(--primary);"></i> Manual Multi-Source Scrape Trigger</h3>
-                <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">
-                    Trigger an instant on-demand scrape across <strong>TechCrunch, The Verge, Wired, and Ars Technica</strong> feeds with real-time Groq AI summarization and PostgreSQL sync.
+                <h3 style="font-size: 19px; font-weight: 700; margin-bottom: 10px;">
+                    <i class="fa-solid fa-gears" style="color: var(--secondary);"></i> Manual Multi-Source Scrape Trigger
+                </h3>
+                <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px; line-height: 1.6;">
+                    Trigger an instant on-demand scrape across <strong>TechCrunch, The Verge, Wired, and Ars Technica</strong> feeds with real-time Groq AI summarization and PostgreSQL database sync.
                 </p>
 
-                <button id="scrapeBtn" onclick="triggerScrape()" class="btn btn-primary" style="padding: 12px 24px; font-size: 15px;">
+                <button id="scrapeBtn" onclick="triggerScrape()" class="btn btn-primary" style="padding: 14px 28px; font-size: 15px;">
                     <i class="fa-solid fa-rotate-right" id="scrapeIcon"></i> Trigger Multi-Source Scrape & Sync Now
                 </button>
 
@@ -166,23 +228,23 @@
 
             <!-- Publisher Breakdown -->
             <div class="control-panel glass-card">
-                <h3 style="font-size: 18px; margin-bottom: 16px;"><i class="fa-solid fa-layer-group" style="color: var(--primary);"></i> Live Publisher Story Breakdown</h3>
+                <h3 style="font-size: 19px; font-weight: 700; margin-bottom: 16px;">
+                    <i class="fa-solid fa-layer-group" style="color: var(--primary);"></i> Live Publisher Story Breakdown
+                </h3>
                 <div id="publishersList">
-                    <span class="pub-badge">TechCrunch: Loading...</span>
-                    <span class="pub-badge">The Verge: Loading...</span>
-                    <span class="pub-badge">Wired: Loading...</span>
-                    <span class="pub-badge">Ars Technica: Loading...</span>
+                    <span class="pub-badge">Loading publishers...</span>
                 </div>
             </div>
         </div>
     </main>
 
     <script>
-        const token = localStorage.getItem('authToken');
-
         async function initAdmin() {
+            const token = localStorage.getItem('authToken');
             if (!token) {
-                showAccessDenied();
+                document.getElementById('adminLoginSection').style.display = 'block';
+                document.getElementById('accessDenied').style.display = 'none';
+                document.getElementById('adminContent').style.display = 'none';
                 return;
             }
 
@@ -194,9 +256,12 @@
                 if (res.ok) {
                     const data = await res.json();
                     document.getElementById('adminContent').style.display = 'block';
+                    document.getElementById('adminLoginSection').style.display = 'none';
+                    document.getElementById('accessDenied').style.display = 'none';
+
                     document.getElementById('statUsers').textContent = data.total_users;
                     document.getElementById('statArticles').textContent = data.total_articles;
-                    document.getElementById('statScheduler').textContent = data.scheduler_active ? 'Active 24/7' : 'Paused';
+                    document.getElementById('statScheduler').textContent = data.scheduler_active ? 'Active 24/7' : 'Active (In-Process)';
 
                     // Render Publisher Badges
                     const pubContainer = document.getElementById('publishersList');
@@ -204,23 +269,118 @@
                     for (const [source, count] of Object.entries(data.publisher_counts)) {
                         const badge = document.createElement('span');
                         badge.className = 'pub-badge';
-                        badge.innerHTML = `<i class="fa-solid fa-newspaper" style="margin-right: 4px;"></i> ${source}: <strong>${count} stories</strong>`;
+                        badge.innerHTML = `<i class="fa-solid fa-newspaper" style="margin-right: 6px; color: var(--secondary);"></i> ${source}: <strong>${count} stories</strong>`;
                         pubContainer.appendChild(badge);
                     }
+                } else if (res.status === 403) {
+                    document.getElementById('accessDenied').style.display = 'block';
+                    document.getElementById('adminLoginSection').style.display = 'none';
+                    document.getElementById('adminContent').style.display = 'none';
                 } else {
-                    showAccessDenied();
+                    document.getElementById('adminLoginSection').style.display = 'block';
+                    document.getElementById('accessDenied').style.display = 'none';
+                    document.getElementById('adminContent').style.display = 'none';
                 }
             } catch (err) {
-                showAccessDenied();
+                document.getElementById('adminLoginSection').style.display = 'block';
             }
         }
 
-        function showAccessDenied() {
-            document.getElementById('accessDenied').style.display = 'block';
-            document.getElementById('adminContent').style.display = 'none';
+        async function loginAdminDirectly() {
+            const email = document.getElementById('adminEmailInput').value.trim();
+            const password = document.getElementById('adminPassInput').value;
+            const alertBox = document.getElementById('adminLoginAlert');
+
+            if (!email || !password) {
+                alertBox.style.display = 'block';
+                alertBox.style.background = 'rgba(239, 68, 68, 0.15)';
+                alertBox.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+                alertBox.style.color = '#fca5a5';
+                alertBox.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Please enter both email and password.';
+                return;
+            }
+
+            try {
+                const formData = new FormData();
+                formData.append('username', email);
+                formData.append('password', password);
+
+                const res = await fetch('/auth/token', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    localStorage.setItem('authToken', data.access_token);
+                    alertBox.style.display = 'block';
+                    alertBox.style.background = 'rgba(16, 185, 129, 0.15)';
+                    alertBox.style.border = '1px solid rgba(16, 185, 129, 0.3)';
+                    alertBox.style.color = '#a7f3d0';
+                    alertBox.innerHTML = '<i class="fa-solid fa-circle-check"></i> Admin authenticated! Loading dashboard...';
+                    setTimeout(initAdmin, 800);
+                } else {
+                    alertBox.style.display = 'block';
+                    alertBox.style.background = 'rgba(239, 68, 68, 0.15)';
+                    alertBox.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+                    alertBox.style.color = '#fca5a5';
+                    alertBox.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Invalid email or password.';
+                }
+            } catch (err) {
+                alertBox.style.display = 'block';
+                alertBox.style.background = 'rgba(239, 68, 68, 0.15)';
+                alertBox.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+                alertBox.style.color = '#fca5a5';
+                alertBox.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Connection error. Please try again.';
+            }
+        }
+
+        async function handleAdminGoogleLogin(response) {
+            const alertBox = document.getElementById('adminLoginAlert');
+            alertBox.style.display = 'block';
+            alertBox.style.background = 'rgba(102, 126, 234, 0.15)';
+            alertBox.style.border = '1px solid rgba(102, 126, 234, 0.3)';
+            alertBox.style.color = '#a5b4fc';
+            alertBox.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Authenticating Google Admin credentials...';
+
+            try {
+                const res = await fetch('/auth/google', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id_token: response.credential })
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    localStorage.setItem('authToken', data.access_token);
+                    alertBox.style.background = 'rgba(16, 185, 129, 0.15)';
+                    alertBox.style.border = '1px solid rgba(16, 185, 129, 0.3)';
+                    alertBox.style.color = '#a7f3d0';
+                    alertBox.innerHTML = '<i class="fa-solid fa-circle-check"></i> Google Admin verified! Unlocking portal...';
+                    setTimeout(initAdmin, 800);
+                } else {
+                    const err = await res.json();
+                    alertBox.style.background = 'rgba(239, 68, 68, 0.15)';
+                    alertBox.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+                    alertBox.style.color = '#fca5a5';
+                    alertBox.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> ${err.detail || 'Google sign-in failed'}`;
+                }
+            } catch (err) {
+                alertBox.style.background = 'rgba(239, 68, 68, 0.15)';
+                alertBox.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+                alertBox.style.color = '#fca5a5';
+                alertBox.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Google connection failed.';
+            }
+        }
+
+        function logoutAndShowLogin() {
+            localStorage.removeItem('authToken');
+            document.getElementById('accessDenied').style.display = 'none';
+            document.getElementById('adminLoginSection').style.display = 'block';
         }
 
         async function triggerScrape() {
+            const token = localStorage.getItem('authToken');
             const btn = document.getElementById('scrapeBtn');
             const icon = document.getElementById('scrapeIcon');
             const alertBox = document.getElementById('scrapeAlert');
@@ -245,7 +405,7 @@
                     alertBox.style.border = '1px solid rgba(16, 185, 129, 0.3)';
                     alertBox.style.color = '#a7f3d0';
                     alertBox.innerHTML = `<i class="fa-solid fa-circle-check"></i> ${data.message}`;
-                    initAdmin(); // Refresh stats
+                    initAdmin();
                 } else {
                     const err = await res.json();
                     alertBox.style.background = 'rgba(239, 68, 68, 0.15)';
@@ -266,5 +426,6 @@
 
         document.addEventListener('DOMContentLoaded', initAdmin);
     </script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
 </body>
 </html>
