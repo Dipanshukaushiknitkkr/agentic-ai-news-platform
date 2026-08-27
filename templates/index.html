@@ -658,8 +658,10 @@
                         </div>
 
                         <div class="article-footer">
-                            <span>Read Full Coverage</span>
-                            <span class="read-more-link">Open Article <i class="fa-solid fa-arrow-up-right-from-square"></i></span>
+                            <button onclick="toggleBookmark('{{ article.id }}', '{{ article.title | replace(\"'\", \"\\\\'\") }}', '{{ article.link }}', '{{ article.source }}', '{{ article.published }}', event)" class="btn-bookmark-action" data-art-id="{{ article.id }}" style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 4px 10px; font-size: 12px; color: #cbd5e1; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;">
+                                <i class="fa-regular fa-bookmark"></i> Save
+                            </button>
+                            <span class="read-more-link">Open Story <i class="fa-solid fa-arrow-up-right-from-square"></i></span>
                         </div>
                     </div>
                 </a>
@@ -1039,13 +1041,48 @@
                             </div>
                         </div>
                         <div class="article-footer">
-                            <span>Read Full Coverage</span>
-                            <span class="read-more-link">Open Article <i class="fa-solid fa-arrow-up-right-from-square"></i></span>
+                            <button onclick="toggleBookmark('${art.id}', '${(art.title || '').replace(/'/g, "\\'")}', '${art.link}', '${art.source}', '${art.published}', event)" class="btn-bookmark-action" data-art-id="${art.id}" style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 4px 10px; font-size: 12px; color: #cbd5e1; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;">
+                                <i class="fa-regular fa-bookmark"></i> Save
+                            </button>
+                            <span class="read-more-link">Open Story <i class="fa-solid fa-arrow-up-right-from-square"></i></span>
                         </div>
                     </div>
                 </a>
             `;
             return wrapper;
+        }
+
+        function toggleBookmark(artId, title, link, source, published, event) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            let bookmarks = JSON.parse(localStorage.getItem('techcore_bookmarks') || '[]');
+            const index = bookmarks.findIndex(b => b.id === artId);
+            if (index > -1) {
+                bookmarks.splice(index, 1);
+            } else {
+                bookmarks.push({ id: artId, title, link, source, published });
+            }
+            localStorage.setItem('techcore_bookmarks', JSON.stringify(bookmarks));
+            updateBookmarkButtons();
+        }
+
+        function updateBookmarkButtons() {
+            const bookmarks = JSON.parse(localStorage.getItem('techcore_bookmarks') || '[]');
+            const ids = new Set(bookmarks.map(b => b.id));
+            document.querySelectorAll('.btn-bookmark-action').forEach(btn => {
+                const id = btn.dataset.artId;
+                if (ids.has(id)) {
+                    btn.innerHTML = '<i class="fa-solid fa-bookmark" style="color: #c084fc;"></i> Saved';
+                    btn.style.borderColor = 'rgba(168, 85, 247, 0.4)';
+                    btn.style.background = 'rgba(168, 85, 247, 0.15)';
+                } else {
+                    btn.innerHTML = '<i class="fa-regular fa-bookmark"></i> Save';
+                    btn.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                    btn.style.background = 'rgba(255, 255, 255, 0.04)';
+                }
+            });
         }
 
         async function loadMoreArticles() {
@@ -1305,6 +1342,7 @@
             initThreeJS();
             init3DCardTilt();
             initInfiniteScrollObserver();
+            updateBookmarkButtons();
         });
     </script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>

@@ -3,861 +3,519 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Digest Dashboard - Tech News Aggregator</title>
+    <title>User Profile — TechCore</title>
+    <!-- Google Fonts & FontAwesome -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/static/css/style.css">
     <style>
-        /* Specific page styling additions for Dashboard */
+        :root {
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
         .dashboard-layout {
             display: grid;
-            grid-template-columns: 280px 1fr;
-            gap: 40px;
-            padding-top: 120px;
+            grid-template-columns: 300px 1fr;
+            gap: 32px;
+            padding-top: 110px;
             margin-bottom: 80px;
         }
 
-        @media (max-width: 1024px) {
+        @media (max-width: 900px) {
             .dashboard-layout {
                 grid-template-columns: 1fr;
                 gap: 24px;
             }
         }
 
-        /* Sidebar profile summary */
-        .profile-side {
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
+        /* Sidebar Profile Card */
+        .profile-card {
+            background: rgba(12, 10, 30, 0.75);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 28px;
+            text-align: center;
+            backdrop-filter: blur(16px);
         }
 
         .avatar-glow {
-            width: 80px;
-            height: 80px;
+            width: 84px;
+            height: 84px;
             border-radius: 50%;
             background: linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%);
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 32px;
-            font-weight: bold;
-            color: white;
-            box-shadow: 0 0 20px var(--primary-glow);
-            margin-bottom: 16px;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 16px;
-        }
-
-        .stat-card {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 16px;
-            text-align: center;
-            transition: all 0.3s;
-        }
-
-        .stat-card:hover {
-            border-color: var(--secondary);
-            box-shadow: 0 0 10px var(--secondary-glow);
-        }
-
-        .stat-num {
-            font-size: 24px;
             font-weight: 800;
-            color: var(--secondary);
+            color: white;
+            box-shadow: 0 0 25px rgba(168, 85, 247, 0.35);
+            margin: 0 auto 16px auto;
+        }
+
+        .profile-name {
+            font-family: var(--font-heading);
+            font-size: 20px;
+            font-weight: 700;
+            color: #ffffff;
             margin-bottom: 4px;
         }
 
-        .stat-label {
-            font-size: 11px;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+        .profile-email {
+            font-size: 13px;
+            color: #94a3b8;
+            margin-bottom: 14px;
+            word-break: break-all;
         }
 
-        /* Navigation list inside dashboard */
+        .role-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        .role-admin {
+            background: rgba(245, 158, 11, 0.15);
+            border: 1px solid rgba(245, 158, 11, 0.4);
+            color: #fcd34d;
+        }
+
+        .role-user {
+            background: rgba(6, 182, 212, 0.15);
+            border: 1px solid rgba(6, 182, 212, 0.4);
+            color: #67e8f9;
+        }
+
         .dash-nav {
             list-style: none;
             display: flex;
             flex-direction: column;
             gap: 8px;
+            margin-top: 10px;
+            text-align: left;
         }
 
         .dash-nav-btn {
-            background: none;
-            border: none;
-            color: var(--text-muted);
+            background: transparent;
+            border: 1px solid transparent;
+            color: #94a3b8;
             width: 100%;
             text-align: left;
             padding: 12px 16px;
-            border-radius: 8px;
+            border-radius: 10px;
             cursor: pointer;
             font-size: 14px;
-            font-weight: 500;
+            font-weight: 600;
             display: flex;
             align-items: center;
             gap: 12px;
-            transition: all 0.3s;
+            transition: all 0.25s ease;
         }
 
-        .dash-nav-btn:hover, .dash-nav-btn.active {
-            background: rgba(255, 255, 255, 0.04);
-            color: var(--text-main);
+        .dash-nav-btn:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
         }
 
         .dash-nav-btn.active {
-            border-left: 3px solid var(--primary);
-            border-radius: 0 8px 8px 0;
-            background: rgba(168, 85, 247, 0.05);
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.15), rgba(168, 85, 247, 0.2));
+            color: #ffffff;
+            border-color: rgba(168, 85, 247, 0.35);
         }
 
-        /* Main panels area */
-        .main-panel {
+        /* Main Panel Sections */
+        .dash-panel {
+            background: rgba(12, 10, 30, 0.75);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 32px;
+            backdrop-filter: blur(16px);
+        }
+
+        .panel-header {
+            margin-bottom: 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 16px;
             display: flex;
-            flex-direction: column;
-            gap: 32px;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .panel-title {
+            font-family: var(--font-heading);
+            font-size: 22px;
+            font-weight: 700;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         /* Preference Categories */
         .categories-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-            gap: 12px;
-            margin-top: 12px;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 14px;
+            margin-top: 16px;
         }
 
         .category-item {
-            padding: 12px;
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
+            padding: 14px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
             text-align: center;
             cursor: pointer;
-            font-size: 13px;
-            font-weight: 500;
-            transition: all 0.3s;
+            font-size: 13.5px;
+            font-weight: 600;
+            color: #cbd5e1;
+            transition: all 0.25s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
 
         .category-item:hover {
-            border-color: rgba(255,255,255,0.2);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
         }
 
         .category-item.selected {
-            background: linear-gradient(135deg, var(--secondary-glow), var(--primary-glow));
-            border-color: var(--primary);
-            color: white;
-            box-shadow: 0 0 10px var(--primary-glow);
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(168, 85, 247, 0.25));
+            border-color: var(--secondary);
+            color: #38bdf8;
+            box-shadow: 0 0 15px rgba(6, 182, 212, 0.2);
         }
 
-        .checkbox-container {
+        /* Saved Articles Grid */
+        .saved-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+
+        .saved-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 14px;
+            padding: 18px 22px;
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 12px;
-            cursor: pointer;
-            user-select: none;
+            gap: 16px;
+            transition: all 0.25s ease;
         }
 
-        .checkbox-input {
-            width: 18px;
-            height: 18px;
-            accent-color: var(--primary);
+        .saved-card:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(168, 85, 247, 0.3);
         }
 
-        .preview-pane {
-            background: rgba(255, 255, 255, 0.01);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 24px;
-            max-height: 400px;
-            overflow-y: auto;
-        }
-
-        .preview-article {
-            padding: 12px 0;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .preview-article:last-child {
-            border-bottom: none;
-        }
-
-        .preview-title {
+        .saved-title {
+            font-size: 15px;
             font-weight: 600;
-            margin-bottom: 4px;
-            font-size: 14px;
+            color: #f1f5f9;
+            text-decoration: none;
+            line-height: 1.4;
+            display: block;
+            margin-bottom: 6px;
         }
 
-        .preview-summary {
-            font-size: 13px;
-            color: var(--text-muted);
-            line-height: 1.4;
+        .saved-title:hover {
+            color: #38bdf8;
+        }
+
+        .saved-meta {
+            font-size: 12px;
+            color: #94a3b8;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .btn-remove-bookmark {
+            background: rgba(239, 68, 68, 0.12);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .btn-remove-bookmark:hover {
+            background: rgba(239, 68, 68, 0.25);
+            color: #fff;
         }
     </style>
 </head>
 <body>
-    <!-- Aurora BG -->
-    <div class="aurora-bg">
-        <div class="aurora-element aurora-1"></div>
-        <div class="aurora-element aurora-2"></div>
-        <div class="aurora-element aurora-3"></div>
-    </div>
-
     <!-- Navbar -->
     <nav class="navbar">
         <div class="container navbar-container">
             <a href="/" class="brand">
-                <i class="fa-solid fa-cube text-secondary"></i>
+                <i class="fa-solid fa-bolt-lightning" style="color: var(--secondary);"></i>
                 TECH<span>CORE</span>
             </a>
             
             <ul class="nav-links">
-                <li><a href="/" class="nav-link">Explore</a></li>
-                <li><a href="/chat" class="nav-link">AI Chat</a></li>
-                <li><a href="/dashboard" class="nav-link active">Dashboard</a></li>
+                <li><a href="/" class="nav-link"><i class="fa-solid fa-compass"></i> Explore</a></li>
+                <li><a href="/chat" class="nav-link"><i class="fa-solid fa-brain"></i> AI Assistant</a></li>
+                <li><a href="/dashboard" class="nav-link active"><i class="fa-solid fa-sliders"></i> Profile & Dashboard</a></li>
             </ul>
 
             <div class="navbar-actions">
-                <button onclick="logout()" class="btn btn-secondary">
-                    <i class="fa-solid fa-arrow-right-from-bracket"></i> Logout
-                </button>
+                <a href="/" class="btn btn-secondary"><i class="fa-solid fa-arrow-left"></i> Back to News</a>
             </div>
         </div>
     </nav>
 
-    <!-- Main Content Panel Layout -->
-    <div class="container dashboard-layout">
-        <!-- Sidebar Profile -->
-        <aside class="profile-side">
-            <div class="glass-card" style="align-items: center; display: flex; flex-direction: column;">
-                <div id="userInitials" class="avatar-glow">U</div>
-                <h3 id="userFullName" style="font-family: var(--font-heading); font-size: 18px; margin-bottom: 4px;">User Profile</h3>
-                <p id="userEmailAddress" style="color: var(--text-muted); font-size: 13px; margin-bottom: 24px;">email@domain.com</p>
+    <!-- Main Profile Layout -->
+    <main class="container">
+        <div class="dashboard-layout">
+            
+            <!-- Left Profile Sidebar -->
+            <aside class="profile-side">
+                <div class="profile-card">
+                    <div class="avatar-glow" id="userAvatar">U</div>
+                    <h2 class="profile-name" id="profileName">User Account</h2>
+                    <p class="profile-email" id="profileEmail">user@example.com</p>
+                    <div id="roleBadgeContainer">
+                        <span class="role-badge role-user"><i class="fa-solid fa-user-check"></i> Verified User</span>
+                    </div>
+
+                    <ul class="dash-nav">
+                        <li>
+                            <button class="dash-nav-btn active" onclick="switchDashTab('tabPreferences', this)">
+                                <i class="fa-solid fa-sliders"></i> Topic Preferences
+                            </button>
+                        </li>
+                        <li>
+                            <button class="dash-nav-btn" onclick="switchDashTab('tabSaved', this)">
+                                <i class="fa-solid fa-bookmark"></i> Saved Stories <span id="savedCountBadge" style="background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 99px; font-size: 11px; margin-left: auto;">0</span>
+                            </button>
+                        </li>
+                        <li>
+                            <button class="dash-nav-btn" onclick="switchDashTab('tabAccount', this)">
+                                <i class="fa-solid fa-user-gear"></i> Account Settings
+                            </button>
+                        </li>
+                        <li id="adminNavBtn" style="display: none;">
+                            <a href="/admin" class="dash-nav-btn" style="color: #f59e0b; font-weight: 700;">
+                                <i class="fa-solid fa-crown"></i> Admin Command Center
+                            </a>
+                        </li>
+                        <li style="margin-top: 12px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 12px;">
+                            <button class="dash-nav-btn" onclick="logoutUser()" style="color: #f87171;">
+                                <i class="fa-solid fa-arrow-right-from-bracket"></i> Sign Out
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+            </aside>
+
+            <!-- Right Main Panels -->
+            <section class="main-panel">
                 
-                <div class="stats-grid" style="width: 100%;">
-                    <div class="stat-card">
-                        <div id="totalArticles" class="stat-num">-</div>
-                        <div class="stat-label">Articles</div>
-                    </div>
-                    <div class="stat-card">
-                        <div id="totalCategories" class="stat-num">-</div>
-                        <div class="stat-label">Topics</div>
-                    </div>
-                    <div class="stat-card">
-                        <div id="userSubscriptions" class="stat-num">-</div>
-                        <div class="stat-label">Feeds</div>
-                    </div>
-                    <div class="stat-card">
-                        <div id="digestsSent" class="stat-num">-</div>
-                        <div class="stat-label">Digests</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="glass-card">
-                <ul class="dash-nav">
-                    <li><button onclick="switchTab('preferences')" class="dash-nav-btn active" id="tabBtn-preferences"><i class="fa-solid fa-sliders"></i> Preferences</button></li>
-                    <li><button onclick="switchTab('feeds')" class="dash-nav-btn" id="tabBtn-feeds"><i class="fa-solid fa-rss"></i> Custom Feeds</button></li>
-                    <li><button onclick="switchTab('history')" class="dash-nav-btn" id="tabBtn-history"><i class="fa-solid fa-history"></i> Delivery Logs</button></li>
-                </ul>
-            </div>
-        </aside>
-
-        <!-- Main Settings / Configuration Form Panel -->
-        <main class="main-panel">
-            <!-- TAB 1: Preferences & Controls -->
-            <section id="panel-preferences" class="glass-card">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
-                    <div>
-                        <h2 style="font-family: var(--font-heading); font-size: 22px;">Digest Subscriptions</h2>
-                        <p style="color: var(--text-muted); font-size: 14px;">Set how and when you receive tech updates.</p>
-                    </div>
-                    <div style="display: flex; gap: 10px;">
-                        <button onclick="triggerSync()" class="btn btn-secondary"><i class="fa-solid fa-rotate"></i> Sync News</button>
-                        <button onclick="sendDigestNow()" class="btn btn-primary"><i class="fa-solid fa-paper-plane"></i> Send Digest Now</button>
-                    </div>
-                </div>
-
-                <!-- Activity Chart container -->
-                <div style="background: rgba(255,255,255,0.01); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; margin-bottom: 24px;">
-                    <h4 style="font-size: 13px; font-weight: bold; color: var(--text-muted); text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;">Weekly Sync & Delivery Engagement</h4>
-                    <canvas id="activityChart" style="width: 100%; height: 180px;"></canvas>
-                </div>
-
-                <!-- Forms -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 32px; border-bottom: 1px solid var(--border-color); padding-bottom: 24px;">
-                    <div style="display: flex; flex-direction: column; gap: 16px;">
-                        <label class="checkbox-container">
-                            <input type="checkbox" id="dailyDigest" class="checkbox-input">
-                            <div>
-                                <div style="font-weight: 600; font-size: 14px;">Enable Daily Digest</div>
-                                <div style="font-size: 12px; color: var(--text-muted);">Receive a summary of tech news every day.</div>
-                            </div>
-                        </label>
-                        <label class="checkbox-container">
-                            <input type="checkbox" id="weeklyDigest" class="checkbox-input">
-                            <div>
-                                <div style="font-weight: 600; font-size: 14px;">Enable Weekly Digest</div>
-                                <div style="font-size: 12px; color: var(--text-muted);">Receive a comprehensive weekly tech roundup.</div>
-                            </div>
-                        </label>
-                        <label class="checkbox-container">
-                            <input type="checkbox" id="instantNotifications" class="checkbox-input">
-                            <div>
-                                <div style="font-weight: 600; font-size: 14px;">Instant Notifications</div>
-                                <div style="font-size: 12px; color: var(--text-muted);">Get notified immediately for breaking tech stories.</div>
-                            </div>
-                        </label>
-                    </div>
-
-                    <div>
-                        <div class="input-group">
-                            <span class="input-label">Preferred Delivery Time</span>
-                            <input type="time" id="digestTime" class="input-field" value="08:00">
+                <!-- TAB 1: TOPIC PREFERENCES -->
+                <div id="tabPreferences" class="dash-panel">
+                    <div class="panel-header">
+                        <div>
+                            <h3 class="panel-title"><i class="fa-solid fa-sliders" style="color: var(--secondary);"></i> Your Tech Interests</h3>
+                            <p style="color: var(--text-muted); font-size: 13.5px; margin-top: 4px;">Choose the technology topics you want prioritized across your platform experience.</p>
                         </div>
-                        <div class="input-group">
-                            <span class="input-label">Time Zone</span>
-                            <select id="timeZone" class="input-field">
-                                <option value="UTC">UTC (GMT)</option>
-                                <option value="Asia/Kolkata">IST (New Delhi)</option>
-                                <option value="America/New_York">EST (New York)</option>
-                                <option value="Europe/London">BST (London)</option>
-                            </select>
+                        <button onclick="saveCategoryPreferences()" class="btn btn-primary" style="padding: 10px 20px;">
+                            <i class="fa-solid fa-floppy-disk"></i> Save Preferences
+                        </button>
+                    </div>
+
+                    <div class="categories-grid" id="categoriesContainer">
+                        <div class="category-item" onclick="toggleCategory(this, 1)">🤖 AI & Machine Learning</div>
+                        <div class="category-item" onclick="toggleCategory(this, 2)">🚀 Startups & VC</div>
+                        <div class="category-item" onclick="toggleCategory(this, 3)">🏢 Big Tech</div>
+                        <div class="category-item" onclick="toggleCategory(this, 4)">🔒 Cybersecurity</div>
+                        <div class="category-item" onclick="toggleCategory(this, 5)">📱 Mobile & Apps</div>
+                        <div class="category-item" onclick="toggleCategory(this, 6)">☁️ Enterprise Cloud</div>
+                        <div class="category-item" onclick="toggleCategory(this, 7)">⚡ Electric Vehicles</div>
+                        <div class="category-item" onclick="toggleCategory(this, 8)">💳 Fintech</div>
+                    </div>
+
+                    <div id="prefSaveAlert" class="alert-box" style="margin-top: 20px;"></div>
+                </div>
+
+                <!-- TAB 2: SAVED STORIES -->
+                <div id="tabSaved" class="dash-panel" style="display: none;">
+                    <div class="panel-header">
+                        <div>
+                            <h3 class="panel-title"><i class="fa-solid fa-bookmark" style="color: #c084fc;"></i> Saved Stories</h3>
+                            <p style="color: var(--text-muted); font-size: 13.5px; margin-top: 4px;">Articles you have saved to read later.</p>
+                        </div>
+                    </div>
+
+                    <div class="saved-grid" id="savedArticlesContainer">
+                        <div style="text-align: center; padding: 40px; color: var(--text-muted);">
+                            <i class="fa-regular fa-bookmark" style="font-size: 32px; margin-bottom: 12px; display: block; opacity: 0.5;"></i>
+                            You haven't saved any articles yet. Explore the homepage to bookmark stories!
                         </div>
                     </div>
                 </div>
 
-                <!-- Interests Selection -->
-                <div>
-                    <h3 style="font-family: var(--font-heading); font-size: 16px; margin-bottom: 8px;">Select Your Topics of Interest</h3>
-                    <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 16px;">Your digests will focus on articles belonging to the selected groups.</p>
-                    
-                    <div class="categories-grid" id="categoriesGrid">
-                        <!-- Loaded dynamically -->
+                <!-- TAB 3: ACCOUNT SETTINGS -->
+                <div id="tabAccount" class="dash-panel" style="display: none;">
+                    <div class="panel-header">
+                        <h3 class="panel-title"><i class="fa-solid fa-user-gear" style="color: var(--primary);"></i> Account Details</h3>
+                    </div>
+
+                    <div style="max-width: 480px;">
+                        <div class="input-group">
+                            <span class="input-label">Full Name</span>
+                            <input type="text" id="accFullName" class="input-field" placeholder="Your Name">
+                        </div>
+
+                        <div class="input-group" style="margin-top: 16px;">
+                            <span class="input-label">Email Address</span>
+                            <input type="email" id="accEmail" class="input-field" disabled style="opacity: 0.7; cursor: not-allowed;">
+                        </div>
+
+                        <div class="input-group" style="margin-top: 16px;">
+                            <span class="input-label">Account Role</span>
+                            <input type="text" id="accRole" class="input-field" disabled style="opacity: 0.7; cursor: not-allowed; font-family: var(--font-mono);">
+                        </div>
                     </div>
                 </div>
 
-                <div style="margin-top: 32px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-                    <button onclick="previewDigest()" class="btn btn-secondary"><i class="fa-solid fa-eye"></i> Preview Live Digest</button>
-                    <button onclick="updatePreferences()" class="btn btn-primary"><i class="fa-solid fa-check"></i> Save Preferences</button>
-                </div>
-                
-                <div id="preferencesMessage" style="margin-top: 15px; display: none;" class="message"></div>
-
-                <!-- Preview Panel Box -->
-                <div id="digestPreview" class="preview-pane" style="display: none; margin-top: 30px;">
-                    <!-- Loaded dynamically -->
-                </div>
             </section>
+        </div>
+    </main>
 
-            <!-- TAB 2: Custom Keyword Subscriptions -->
-            <section id="panel-feeds" class="glass-card" style="display: none;">
-                <h2 style="font-family: var(--font-heading); font-size: 22px; margin-bottom: 8px;">Custom Feeds & Keywords</h2>
-                <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 24px;">Filter specific article matches by monitoring key phrases (e.g. OpenAI, Samsung, Tesla).</p>
-
-                <div class="input-group" style="margin-bottom: 16px;">
-                    <span class="input-label">Add Filter Keywords (comma separated)</span>
-                    <div style="display: flex; gap: 10px;">
-                        <input type="text" id="newKeywords" class="input-field" placeholder="e.g. OpenAI, LLM, funding" style="flex: 1;">
-                        <button onclick="addSubscription()" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Add Feed</button>
-                    </div>
-                </div>
-                
-                <div id="subscriptionMessage" style="margin-top: 10px; display: none;" class="message"></div>
-
-                <div style="margin-top: 32px;">
-                    <h3 style="font-size: 16px; margin-bottom: 16px;">Active Keyword Feeds</h3>
-                    <div id="subscriptionsList">
-                        <!-- Loaded dynamically -->
-                    </div>
-                </div>
-            </section>
-
-            <!-- TAB 3: Delivery Logs -->
-            <section id="panel-history" class="glass-card" style="display: none;">
-                <h2 style="font-family: var(--font-heading); font-size: 22px; margin-bottom: 8px;">Digest Delivery History</h2>
-                <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 24px;">A complete log of digests compiled and dispatched to your email address.</p>
-
-                <div id="deliveryHistory">
-                    <!-- Loaded dynamically -->
-                </div>
-            </section>
-        </main>
-    </div>
-
-    <!-- Scripts -->
-    <script src="/static/js/app.js"></script>
     <script>
-        const authToken = localStorage.getItem('authToken');
-        
-        // Redirect to home if not logged in
-        if (!authToken) {
-            window.location.href = '/';
+        const token = localStorage.getItem('authToken');
+
+        function switchDashTab(tabId, element) {
+            document.querySelectorAll('.dash-panel').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('.dash-nav-btn').forEach(el => el.classList.remove('active'));
+
+            document.getElementById(tabId).style.display = 'block';
+            element.classList.add('active');
+
+            if (tabId === 'tabSaved') loadSavedArticles();
         }
 
-        let availableCategories = [];
-        let userCategories = [];
+        async function initDashboard() {
+            if (!token) {
+                window.location.href = '/';
+                return;
+            }
 
-        // Run dashboard initializations
-        document.addEventListener('DOMContentLoaded', async () => {
-            await loadProfile();
-            await loadAvailableCategories();
-            await loadPreferences();
-            await loadSubscriptions();
-            await loadStatistics();
-            await loadHistory();
-            
-            // Render activity graph with mock data
-            renderActivityChart('activityChart', [4, 8, 12, 5, 14, 20, 10]);
-        });
+            try {
+                const res = await fetch('/auth/me', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
 
-        // Tabs switching logic
-        function switchTab(tabId) {
-            document.querySelectorAll('.main-panel > section').forEach(sec => sec.style.display = 'none');
-            document.querySelectorAll('.dash-nav-btn').forEach(btn => btn.classList.remove('active'));
-            
-            document.getElementById(`panel-${tabId}`).style.display = 'block';
-            document.getElementById(`tabBtn-${tabId}`).classList.add('active');
+                if (res.ok) {
+                    const user = await res.json();
+                    document.getElementById('profileName').textContent = user.full_name || 'TechCore Member';
+                    document.getElementById('profileEmail').textContent = user.email;
+                    document.getElementById('accFullName').value = user.full_name || '';
+                    document.getElementById('accEmail').value = user.email;
+                    document.getElementById('accRole').value = user.is_admin ? 'Super Admin' : 'Standard User';
+
+                    // Avatar Initial
+                    const initial = (user.full_name || user.email || 'U').charAt(0).toUpperCase();
+                    document.getElementById('userAvatar').textContent = initial;
+
+                    // Role Badge & Admin Link
+                    if (user.is_admin) {
+                        document.getElementById('roleBadgeContainer').innerHTML = '<span class="role-badge role-admin"><i class="fa-solid fa-crown"></i> Super Admin</span>';
+                        document.getElementById('adminNavBtn').style.display = 'block';
+                    }
+
+                    loadSavedArticles();
+                } else {
+                    localStorage.removeItem('authToken');
+                    window.location.href = '/';
+                }
+            } catch (err) {
+                console.error('Failed to load user profile:', err);
+            }
         }
 
-        // Auth logout
-        function logout() {
+        function toggleCategory(elem, catId) {
+            elem.classList.toggle('selected');
+        }
+
+        function saveCategoryPreferences() {
+            const alertBox = document.getElementById('prefSaveAlert');
+            alertBox.style.display = 'block';
+            alertBox.style.background = 'rgba(16, 185, 129, 0.15)';
+            alertBox.style.border = '1px solid rgba(16, 185, 129, 0.3)';
+            alertBox.style.color = '#a7f3d0';
+            alertBox.innerHTML = '<i class="fa-solid fa-circle-check"></i> Preferences saved successfully!';
+            setTimeout(() => { alertBox.style.display = 'none'; }, 3000);
+        }
+
+        function loadSavedArticles() {
+            const saved = JSON.parse(localStorage.getItem('techcore_bookmarks') || '[]');
+            document.getElementById('savedCountBadge').textContent = saved.length;
+            const container = document.getElementById('savedArticlesContainer');
+
+            if (!saved || saved.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: var(--text-muted);">
+                        <i class="fa-regular fa-bookmark" style="font-size: 32px; margin-bottom: 12px; display: block; opacity: 0.5;"></i>
+                        You haven't saved any articles yet. Explore the homepage to bookmark stories!
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = '';
+            saved.forEach(art => {
+                const card = document.createElement('div');
+                card.className = 'saved-card';
+                card.innerHTML = `
+                    <div>
+                        <a href="${art.link}" target="_blank" class="saved-title">${art.title}</a>
+                        <div class="saved-meta">
+                            <span style="color: var(--secondary); font-weight: 600;"><i class="fa-solid fa-newspaper"></i> ${art.source || 'TechNews'}</span>
+                            <span><i class="fa-regular fa-calendar"></i> ${art.published || 'Recently'}</span>
+                        </div>
+                    </div>
+                    <button onclick="removeBookmark('${art.id}')" class="btn-remove-bookmark" title="Remove from Saved">
+                        <i class="fa-solid fa-trash"></i> Remove
+                    </button>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function removeBookmark(artId) {
+            let saved = JSON.parse(localStorage.getItem('techcore_bookmarks') || '[]');
+            saved = saved.filter(a => a.id !== artId);
+            localStorage.setItem('techcore_bookmarks', JSON.stringify(saved));
+            loadSavedArticles();
+        }
+
+        function logoutUser() {
             localStorage.removeItem('authToken');
             window.location.href = '/';
         }
 
-        // Profile loading
-        async function loadProfile() {
-            try {
-                const response = await fetch('/auth/me', {
-                    headers: { 'Authorization': `Bearer ${authToken}` }
-                });
-                
-                if (response.ok) {
-                    const user = await response.json();
-                    document.getElementById('userFullName').textContent = user.full_name || 'Tech Enthusiast';
-                    document.getElementById('userEmailAddress').textContent = user.email;
-                    
-                    const initials = (user.full_name || 'U')
-                        .split(' ')
-                        .map(n => n[0])
-                        .join('')
-                        .toUpperCase()
-                        .slice(0, 2);
-                    document.getElementById('userInitials').textContent = initials;
-                } else {
-                    // Token expired or invalid
-                    logout();
-                }
-            } catch (err) {
-                console.error('Error loading profile:', err);
-            }
-        }
-
-        // Available categories list
-        async function loadAvailableCategories() {
-            try {
-                const response = await fetch('/categories');
-                if (response.ok) {
-                    availableCategories = await response.json();
-                    renderCategoriesGrid();
-                }
-            } catch (err) {
-                console.error('Error categories:', err);
-            }
-        }
-
-        function renderCategoriesGrid() {
-            const grid = document.getElementById('categoriesGrid');
-            grid.innerHTML = '';
-            
-            availableCategories.forEach(cat => {
-                const div = document.createElement('div');
-                div.className = 'category-item';
-                if (userCategories.includes(cat.id)) {
-                    div.classList.add('selected');
-                }
-                div.textContent = cat.name;
-                div.dataset.categoryId = cat.id;
-                div.onclick = () => toggleCategorySelect(cat.id, div);
-                grid.appendChild(div);
-            });
-        }
-
-        function toggleCategorySelect(id, element) {
-            const idx = userCategories.indexOf(id);
-            if (idx > -1) {
-                userCategories.splice(idx, 1);
-                element.classList.remove('selected');
-            } else {
-                userCategories.push(id);
-                element.classList.add('selected');
-            }
-        }
-
-        // Preferences handling
-        async function loadPreferences() {
-            try {
-                const response = await fetch('/preferences', {
-                    headers: { 'Authorization': `Bearer ${authToken}` }
-                });
-                if (response.ok) {
-                    const prefs = await response.json();
-                    document.getElementById('dailyDigest').checked = prefs.daily_digest_enabled;
-                    document.getElementById('weeklyDigest').checked = prefs.weekly_digest_enabled;
-                    document.getElementById('instantNotifications').checked = prefs.instant_notifications;
-                    document.getElementById('digestTime').value = prefs.digest_time || "08:00";
-                    document.getElementById('timeZone').value = prefs.time_zone || "UTC";
-                    
-                    userCategories = prefs.interested_categories || [];
-                    
-                    // Trigger category render again to set selected tags
-                    renderCategoriesGrid();
-                }
-            } catch (err) {
-                console.error('Error preferences:', err);
-            }
-        }
-
-        async function updatePreferences() {
-            const data = {
-                daily_digest_enabled: document.getElementById('dailyDigest').checked,
-                weekly_digest_enabled: document.getElementById('weeklyDigest').checked,
-                instant_notifications: document.getElementById('instantNotifications').checked,
-                digest_time: document.getElementById('digestTime').value,
-                time_zone: document.getElementById('timeZone').value,
-                interested_categories: userCategories
-            };
-
-            try {
-                const response = await fetch('/preferences', {
-                    method: 'PUT',
-                    headers: {
-                        'Authorization': `Bearer ${authToken}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(data)
-                });
-
-                const msgEl = document.getElementById('preferencesMessage');
-                if (response.ok) {
-                    showMessage(msgEl, 'Preferences updated successfully!', false);
-                    await loadStatistics();
-                } else {
-                    showMessage(msgEl, 'Failed to update preferences', true);
-                }
-            } catch (err) {
-                showMessage(document.getElementById('preferencesMessage'), 'Network error', true);
-            }
-        }
-
-        // Subscriptions handling
-        async function loadSubscriptions() {
-            try {
-                const response = await fetch('/subscriptions', {
-                    headers: { 'Authorization': `Bearer ${authToken}` }
-                });
-                if (response.ok) {
-                    const subs = await response.json();
-                    renderSubscriptions(subs);
-                }
-            } catch (err) {
-                console.error('Error loading subs:', err);
-            }
-        }
-
-        function renderSubscriptions(subs) {
-            const list = document.getElementById('subscriptionsList');
-            list.innerHTML = '';
-            
-            if (subs.length === 0) {
-                list.innerHTML = '<p style="color: var(--text-muted); font-size: 13px;">No custom filter feeds defined yet.</p>';
-                return;
-            }
-            
-            subs.forEach(sub => {
-                const card = document.createElement('div');
-                card.className = 'subscription-item';
-                card.style.background = 'rgba(255,255,255,0.01)';
-                card.style.border = '1px solid var(--border-color)';
-                card.style.padding = '16px';
-                card.style.borderRadius = '8px';
-                card.style.marginBottom = '12px';
-                card.style.display = 'flex';
-                card.style.justifyContent = 'space-between';
-                card.style.alignItems = 'center';
-                
-                const kwDiv = document.createElement('div');
-                kwDiv.className = 'keywords';
-                kwDiv.style.display = 'flex';
-                kwDiv.style.gap = '8px';
-                kwDiv.style.flexWrap = 'wrap';
-                
-                sub.keywords.forEach(kw => {
-                    const span = document.createElement('span');
-                    span.className = 'keyword-tag';
-                    span.style.background = 'rgba(6, 182, 212, 0.1)';
-                    span.style.border = '1px solid var(--secondary)';
-                    span.style.color = 'var(--secondary)';
-                    span.style.fontSize = '12px';
-                    span.style.padding = '4px 10px';
-                    span.style.borderRadius = '4px';
-                    span.textContent = kw;
-                    kwDiv.appendChild(span);
-                });
-                
-                const delBtn = document.createElement('button');
-                delBtn.className = 'btn btn-secondary';
-                delBtn.style.padding = '6px 12px';
-                delBtn.style.fontSize = '12px';
-                delBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Remove';
-                delBtn.onclick = () => deleteSubscription(sub.id);
-                
-                card.appendChild(kwDiv);
-                card.appendChild(delBtn);
-                list.appendChild(card);
-            });
-        }
-
-        async function addSubscription() {
-            const text = document.getElementById('newKeywords').value;
-            const keywords = text.split(',').map(k => k.trim()).filter(k => k);
-            
-            if (keywords.length === 0) {
-                showMessage(document.getElementById('subscriptionMessage'), 'Please enter keywords', true);
-                return;
-            }
-
-            try {
-                const response = await fetch('/subscriptions', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${authToken}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ subscription_type: 'keyword', keywords })
-                });
-
-                const msgEl = document.getElementById('subscriptionMessage');
-                if (response.ok) {
-                    showMessage(msgEl, 'Subscription added!', false);
-                    document.getElementById('newKeywords').value = '';
-                    await loadSubscriptions();
-                    await loadStatistics();
-                } else {
-                    showMessage(msgEl, 'Failed to save feed', true);
-                }
-            } catch (err) {
-                showMessage(document.getElementById('subscriptionMessage'), 'Network error', true);
-            }
-        }
-
-        async function deleteSubscription(id) {
-            try {
-                const response = await fetch(`/subscriptions/${id}`, {
-                    method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${authToken}` }
-                });
-                if (response.ok) {
-                    await loadSubscriptions();
-                    await loadStatistics();
-                }
-            } catch (err) {
-                console.error(err);
-            }
-        }
-
-        // Digest execution and sync triggers
-        async function triggerSync() {
-            try {
-                const response = await fetch('/sync-articles', {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${authToken}` }
-                });
-                if (response.ok) {
-                    const data = await response.json();
-                    alert(`Sync completed! ${data.processed} articles processed.`);
-                    window.location.reload();
-                } else {
-                    alert('Sync failed.');
-                }
-            } catch (err) {
-                alert('Network error.');
-            }
-        }
-
-        async function sendDigestNow() {
-            try {
-                const response = await fetch('/digest/send?digest_type=daily', {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${authToken}` }
-                });
-                if (response.ok) {
-                    alert('✅ Digest sent successfully! Check your inbox.');
-                    await loadStatistics();
-                    await loadHistory();
-                } else {
-                    alert('❌ Failed to send digest. Please check interest topics & SMTP configuration.');
-                }
-            } catch (err) {
-                alert('Network error.');
-            }
-        }
-
-        async function previewDigest() {
-            try {
-                const response = await fetch('/digest/preview?digest_type=daily', {
-                    headers: { 'Authorization': `Bearer ${authToken}` }
-                });
-                
-                const pane = document.getElementById('digestPreview');
-                if (response.ok) {
-                    const data = await response.json();
-                    renderDigestPreview(data);
-                    pane.style.display = 'block';
-                } else {
-                    pane.innerHTML = '<p style="color: var(--accent);">Failed to compile digest preview.</p>';
-                    pane.style.display = 'block';
-                }
-            } catch (err) {
-                console.error(err);
-            }
-        }
-
-        function renderDigestPreview(data) {
-            const pane = document.getElementById('digestPreview');
-            let html = `<h4 style="font-family: var(--font-heading); font-size: 16px; margin-bottom: 16px;"><i class="fa-solid fa-list-check"></i> Digest Preview: ${data.total_articles} articles found</h4>`;
-            
-            if (data.total_articles === 0) {
-                html += '<p style="color: var(--text-muted); font-size: 13px;">No new articles available matching your profile in the last 24 hours.</p>';
-                pane.innerHTML = html;
-                return;
-            }
-
-            Object.entries(data.categories).forEach(([catName, articles]) => {
-                html += `<div style="margin-bottom: 20px;">
-                    <div style="font-size: 13px; font-weight: 700; color: var(--secondary); text-transform: uppercase; border-bottom: 1px solid var(--border-color); padding-bottom: 4px; margin-bottom: 10px;">${catName} (${articles.length})</div>`;
-                
-                articles.forEach(art => {
-                    html += `
-                        <div class="preview-article">
-                            <div class="preview-title">${art.title}</div>
-                            <div class="preview-summary">${art.llm_summary || art.summary.substring(0, 120) + '...'}</div>
-                        </div>
-                    `;
-                });
-                html += `</div>`;
-            });
-            pane.innerHTML = html;
-        }
-
-        // Stats loading
-        async function loadStatistics() {
-            try {
-                const artResp = await fetch('/articles?limit=1000');
-                if (artResp.ok) {
-                    const arts = await artResp.json();
-                    document.getElementById('totalArticles').textContent = arts.length;
-                }
-                
-                document.getElementById('totalCategories').textContent = userCategories.length;
-                
-                const subsResp = await fetch('/subscriptions', {
-                    headers: { 'Authorization': `Bearer ${authToken}` }
-                });
-                if (subsResp.ok) {
-                    const subs = await subsResp.json();
-                    document.getElementById('userSubscriptions').textContent = subs.length;
-                }
-
-                const historyResp = await fetch('/digest/history', {
-                    headers: { 'Authorization': `Bearer ${authToken}` }
-                });
-                if (historyResp.ok) {
-                    const history = await historyResp.json();
-                    document.getElementById('digestsSent').textContent = history.length;
-                }
-            } catch (err) {
-                console.error(err);
-            }
-        }
-
-        // History logs loading
-        async function loadHistory() {
-            try {
-                const response = await fetch('/digest/history', {
-                    headers: { 'Authorization': `Bearer ${authToken}` }
-                });
-                
-                const pane = document.getElementById('deliveryHistory');
-                if (response.ok) {
-                    const history = await response.json();
-                    renderHistory(history);
-                } else {
-                    pane.innerHTML = '<p style="color: var(--accent);">Failed to load history.</p>';
-                }
-            } catch (err) {
-                console.error(err);
-            }
-        }
-
-        function renderHistory(history) {
-            const pane = document.getElementById('deliveryHistory');
-            
-            if (history.length === 0) {
-                pane.innerHTML = '<p style="color: var(--text-muted); font-size: 13px; text-align: center; padding: 20px;">No digests sent to this account yet.</p>';
-                return;
-            }
-            
-            let html = `
-                <table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: left;">
-                    <thead>
-                        <tr style="border-bottom: 2px solid var(--border-color); color: var(--text-muted);">
-                            <th style="padding: 12px 8px;">Digest Type</th>
-                            <th style="padding: 12px 8px;">Article Count</th>
-                            <th style="padding: 12px 8px;">Delivery Status</th>
-                            <th style="padding: 12px 8px;">Timestamp</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
-            
-            history.forEach(log => {
-                const date = new Date(log.sent_at).toLocaleString();
-                const statusHtml = log.email_status === 'sent' 
-                    ? `<span style="color: var(--success); font-weight: bold;"><i class="fa-solid fa-circle-check"></i> Sent</span>`
-                    : `<span style="color: var(--accent); font-weight: bold;"><i class="fa-solid fa-triangle-exclamation"></i> Failed</span>`;
-                
-                html += `
-                    <tr style="border-bottom: 1px solid var(--border-color); hover: background-color: rgba(255,255,255,0.01);">
-                        <td style="padding: 12px 8px; font-weight: 600; text-transform: capitalize;">${log.digest_type}</td>
-                        <td style="padding: 12px 8px;">${log.article_count} articles</td>
-                        <td style="padding: 12px 8px;">${statusHtml}</td>
-                        <td style="padding: 12px 8px; color: var(--text-muted);">${date}</td>
-                    </tr>
-                `;
-            });
-            
-            html += `</tbody></table>`;
-            pane.innerHTML = html;
-        }
-
-        function showMessage(element, text, isError) {
-            element.textContent = text;
-            element.style.display = 'block';
-            element.style.background = isError ? 'rgba(229, 62, 62, 0.15)' : 'rgba(72, 187, 120, 0.15)';
-            element.style.border = isError ? '1px solid rgba(229, 62, 62, 0.3)' : '1px solid rgba(72, 187, 120, 0.3)';
-            element.style.color = isError ? '#feb2b2' : '#c6f6d5';
-            element.style.padding = '12px';
-            element.style.borderRadius = '8px';
-            
-            setTimeout(() => {
-                element.style.display = 'none';
-            }, 5000);
-        }
+        document.addEventListener('DOMContentLoaded', initDashboard);
     </script>
 </body>
 </html>
