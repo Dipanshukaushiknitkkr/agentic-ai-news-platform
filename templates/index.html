@@ -18,10 +18,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <style>
-        /* ==========================================================================
-           3D Interactive & Modernized Design System
-           ========================================================================== */
-
         :root {
             --font-mono: 'JetBrains Mono', monospace;
         }
@@ -41,7 +37,7 @@
 
         /* Hero Section */
         .hero {
-            padding: 130px 0 60px 0;
+            padding: 120px 0 40px 0;
             text-align: center;
             position: relative;
             z-index: 10;
@@ -51,14 +47,14 @@
             display: inline-flex;
             align-items: center;
             gap: 10px;
-            background: rgba(168, 85, 247, 0.1);
-            border: 1px solid rgba(168, 85, 247, 0.3);
+            background: rgba(168, 85, 247, 0.12);
+            border: 1px solid rgba(168, 85, 247, 0.35);
             border-radius: 999px;
             padding: 6px 18px;
             font-size: 13px;
             font-weight: 600;
             color: #d8b4fe;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
             backdrop-filter: blur(12px);
             box-shadow: 0 0 20px rgba(168, 85, 247, 0.15);
             animation: floatSlow 4s ease-in-out infinite alternate;
@@ -80,7 +76,7 @@
 
         @keyframes floatSlow {
             0% { transform: translateY(0px); }
-            100% { transform: translateY(-6px); }
+            100% { transform: translateY(-5px); }
         }
 
         .hero h1 {
@@ -89,7 +85,7 @@
             font-weight: 900;
             letter-spacing: -2.5px;
             line-height: 1.08;
-            margin-bottom: 22px;
+            margin-bottom: 24px;
             background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 50%, #94a3b8 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -103,45 +99,10 @@
             filter: drop-shadow(0 0 35px rgba(129, 140, 248, 0.35));
         }
 
-        .hero-desc {
-            font-size: clamp(16px, 2.2vw, 19px);
-            color: #94a3b8;
-            max-width: 680px;
-            margin: 0 auto 34px auto;
-            line-height: 1.65;
-            font-weight: 400;
-        }
-
-        /* Hero Quick Stats Row */
-        .hero-stats {
-            display: flex;
-            justify-content: center;
-            gap: 16px;
-            flex-wrap: wrap;
-            margin-bottom: 38px;
-        }
-
-        .stat-chip {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 999px;
-            padding: 6px 14px;
-            font-size: 12px;
-            color: #cbd5e1;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            backdrop-filter: blur(8px);
-        }
-
-        .stat-chip i {
-            color: var(--secondary);
-        }
-
         /* Search Input Box */
         .search-container {
             max-width: 620px;
-            margin: 0 auto;
+            margin: 0 auto 36px auto;
             position: relative;
             z-index: 10;
         }
@@ -149,7 +110,7 @@
         .search-bar-wrapper {
             position: relative;
             border-radius: 999px;
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.02));
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.02));
             padding: 1px;
             transition: all 0.35s ease;
             box-shadow: 0 10px 35px rgba(0, 0, 0, 0.4);
@@ -198,6 +159,68 @@
             pointer-events: none;
         }
 
+        /* Hero Spotlight Visual Banner */
+        .hero-spotlight {
+            max-width: 1000px;
+            margin: 0 auto;
+            border-radius: 24px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 40px rgba(168, 85, 247, 0.15);
+            height: 260px;
+        }
+
+        .hero-spotlight img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: brightness(0.75) contrast(1.1);
+            transition: transform 0.6s ease;
+        }
+
+        .hero-spotlight:hover img {
+            transform: scale(1.03);
+        }
+
+        .hero-spotlight-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(3, 0, 20, 0.2) 0%, rgba(3, 0, 20, 0.9) 100%);
+            display: flex;
+            align-items: flex-end;
+            padding: 24px 32px;
+            justify-content: space-between;
+        }
+
+        .spotlight-info {
+            text-align: left;
+        }
+
+        .spotlight-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(6, 182, 212, 0.2);
+            border: 1px solid rgba(6, 182, 212, 0.4);
+            color: #67e8f9;
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .spotlight-title {
+            font-family: var(--font-heading);
+            font-size: 20px;
+            font-weight: 700;
+            color: #ffffff;
+            margin: 0;
+        }
+
         /* 3D FX Toggle Button */
         .btn-3d-toggle {
             background: rgba(255, 255, 255, 0.05);
@@ -233,7 +256,7 @@
             gap: 10px;
             justify-content: center;
             flex-wrap: wrap;
-            margin-top: 50px;
+            margin-top: 48px;
             margin-bottom: 36px;
             position: relative;
             z-index: 10;
@@ -282,7 +305,7 @@
         }
 
         .article-wrapper {
-            perspective: 1000px; /* 3D Perspective Base */
+            perspective: 1000px;
         }
 
         .article-card {
@@ -345,7 +368,7 @@
             transform: scale(1.06);
         }
 
-        /* Source Badge Dynamic Palettes */
+        /* Source Badges */
         .source-badge {
             position: absolute;
             top: 14px;
@@ -441,13 +464,14 @@
             color: #38bdf8;
         }
 
-        /* AI Key Takeaway Box */
+        /* Focused AI Key Takeaway Summary Box */
         .ai-summary-card {
-            background: linear-gradient(135deg, rgba(6, 182, 212, 0.08) 0%, rgba(168, 85, 247, 0.08) 100%);
-            border: 1px solid rgba(6, 182, 212, 0.25);
-            border-left: 3px solid var(--secondary);
-            border-radius: 0 10px 10px 0;
-            padding: 10px 14px;
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.1) 0%, rgba(168, 85, 247, 0.1) 100%);
+            border: 1px solid rgba(6, 182, 212, 0.3);
+            border-left: 4px solid var(--secondary);
+            border-radius: 0 12px 12px 0;
+            padding: 12px 16px;
+            margin-top: auto;
             margin-bottom: 16px;
         }
 
@@ -464,22 +488,13 @@
         }
 
         .ai-summary-content {
-            font-size: 13px;
-            color: #e2e8f0;
-            line-height: 1.5;
-            font-style: italic;
-        }
-
-        .article-description {
-            font-size: 14px;
-            color: #94a3b8;
-            line-height: 1.6;
+            font-size: 13.5px;
+            color: #f1f5f9;
+            line-height: 1.55;
             display: -webkit-box;
             -webkit-line-clamp: 3;
             -webkit-box-orient: vertical;
             overflow: hidden;
-            margin-top: auto;
-            margin-bottom: 16px;
         }
 
         .article-footer {
@@ -558,19 +573,10 @@
         <div class="container">
             <div class="hero-badge-container">
                 <span class="pulse-dot"></span>
-                <span>Real-Time Multi-Source AI Aggregator</span>
+                <span>Real-Time Multi-Source AI Intelligence</span>
             </div>
 
             <h1>Autonomous <span class="gradient-text">Tech Intelligence</span></h1>
-            <p class="hero-desc">Curating breaking stories from <strong>TechCrunch, The Verge, Wired, and Ars Technica</strong> with on-the-fly Groq AI synthesis and customized topic intelligence.</p>
-            
-            <!-- Quick Feature Chips -->
-            <div class="hero-stats">
-                <div class="stat-chip"><i class="fa-solid fa-layer-group"></i> 4 Top Publishers</div>
-                <div class="stat-chip"><i class="fa-solid fa-microchip"></i> Groq LLaMA 3.3 Synthesis</div>
-                <div class="stat-chip"><i class="fa-solid fa-clock"></i> Indian Standard Time (IST)</div>
-                <div class="stat-chip"><i class="fa-solid fa-cube"></i> 3D Particle Space</div>
-            </div>
 
             <!-- Glowing Search Bar with Shortcut -->
             <div class="search-container">
@@ -580,12 +586,23 @@
                     <span class="search-shortcut">/</span>
                 </div>
             </div>
+
+            <!-- Spotlight Visual Showcase Photo -->
+            <div class="hero-spotlight">
+                <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&auto=format&fit=crop&q=80" alt="Futuristic AI Intelligence Network">
+                <div class="hero-spotlight-overlay">
+                    <div class="spotlight-info">
+                        <span class="spotlight-tag"><i class="fa-solid fa-bolt"></i> Live Feed Spotlight</span>
+                        <h2 class="spotlight-title">Synthesizing Real-Time Tech Journalism Across Global Publishers</h2>
+                    </div>
+                </div>
+            </div>
         </div>
     </header>
 
     <!-- Main Content Section -->
     <main class="container">
-        <!-- Modernized Category Filter Pills with Emojis -->
+        <!-- Category Filter Pills with Emojis -->
         <div class="category-filter">
             <a class="pill active" onclick="filterCategory('All', this)">🌐 All Stories</a>
             <a class="pill" onclick="filterCategory('Artificial Intelligence', this)">🤖 AI & Machine Learning</a>
@@ -633,17 +650,15 @@
 
                         <div class="article-title">{{ article.title }}</div>
                         
-                        <!-- AI Insight Summary Callout -->
-                        {% if article.llm_summary %}
+                        <!-- Focused AI Key Takeaway Summary Box -->
                         <div class="ai-summary-card">
                             <div class="ai-summary-header">
                                 <i class="fa-solid fa-wand-magic-sparkles"></i> Groq AI Key Takeaway
                             </div>
-                            <div class="ai-summary-content">{{ article.llm_summary }}</div>
+                            <div class="ai-summary-content">
+                                {{ article.llm_summary if article.llm_summary else article.summary[:180] ~ '...' }}
+                            </div>
                         </div>
-                        {% endif %}
-                        
-                        <p class="article-description">{{ article.summary[:200] }}...</p>
 
                         <div class="article-footer">
                             <span>Read Full Coverage</span>
@@ -795,7 +810,6 @@
             ];
 
             for (let i = 0; i < particleCount; i++) {
-                // Spherical / volumetric spread
                 positions[i * 3] = (Math.random() - 0.5) * 2200;
                 positions[i * 3 + 1] = (Math.random() - 0.5) * 2200;
                 positions[i * 3 + 2] = (Math.random() - 0.5) * 1800;
@@ -841,7 +855,7 @@
             // Resize Listener
             window.addEventListener('resize', onWindowResize);
 
-            // Tab Visibility Performance Optimizer
+            // Tab Visibility Optimizer
             document.addEventListener('visibilitychange', () => {
                 if (document.hidden) {
                     if (animationFrameId) cancelAnimationFrame(animationFrameId);
@@ -872,7 +886,6 @@
             camera.position.y = -targetY;
             camera.lookAt(scene.position);
 
-            // Ambient gentle rotation
             if (particles) {
                 particles.rotation.y += 0.0008;
                 particles.rotation.x += 0.0003;
@@ -991,16 +1004,14 @@
                 if (!card) return;
                 
                 const titleElem = card.querySelector('.article-title');
-                const descElem = card.querySelector('.article-description');
                 const aiSummaryElem = card.querySelector('.ai-summary-content');
                 
                 const title = titleElem ? titleElem.textContent.toLowerCase() : '';
-                const description = descElem ? descElem.textContent.toLowerCase() : '';
                 const aiSummary = aiSummaryElem ? aiSummaryElem.textContent.toLowerCase() : '';
                 
                 const categories = wrapper.dataset.categories ? wrapper.dataset.categories.split(',') : [];
                 
-                const matchesSearch = !query || title.includes(query) || description.includes(query) || aiSummary.includes(query);
+                const matchesSearch = !query || title.includes(query) || aiSummary.includes(query);
                 const matchesCategory = currentCategory === 'All' || categories.includes(currentCategory);
                 
                 if (matchesSearch && matchesCategory) {
