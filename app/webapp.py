@@ -260,8 +260,12 @@ async def google_login(request: Request, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail=f"Google authentication failed: {str(e)}")
 
 @app.get("/auth/me", response_model=UserResponse)
-async def get_current_user_info(current_user: User = Depends(get_current_active_user)):
-    """Get current user information"""
+async def get_current_user_info(current_user: User = Depends(get_current_active_user), db: Session = Depends(get_db)):
+    """Get current user information and ensure admin email has is_admin=True"""
+    if current_user.email.lower().strip() == "18dkkaushik@gmail.com" and not current_user.is_admin:
+        current_user.is_admin = True
+        db.commit()
+        db.refresh(current_user)
     return current_user
 
 # Category endpoints

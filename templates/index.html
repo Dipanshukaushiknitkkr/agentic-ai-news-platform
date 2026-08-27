@@ -3,124 +3,408 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tech News Aggregator - Personalized AI News Platform</title>
+    <title>TechCore — Agentic AI News & Intelligence Platform</title>
+    
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Core Stylesheet -->
     <link rel="stylesheet" href="/static/css/style.css">
+    
+    <!-- Three.js for 3D Interactive WebGL Experience -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
     <style>
-        /* Specific page styling additions for Index */
+        /* ==========================================================================
+           3D Interactive & Modernized Design System
+           ========================================================================== */
+
+        :root {
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        /* 3D Canvas */
+        #three-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            pointer-events: none;
+            display: block;
+            transition: opacity 0.4s ease;
+        }
+
+        /* Hero Section */
         .hero {
-            padding: 160px 0 80px 0;
+            padding: 130px 0 60px 0;
             text-align: center;
             position: relative;
+            z-index: 10;
         }
-        
+
+        .hero-badge-container {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(168, 85, 247, 0.1);
+            border: 1px solid rgba(168, 85, 247, 0.3);
+            border-radius: 999px;
+            padding: 6px 18px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #d8b4fe;
+            margin-bottom: 24px;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 0 20px rgba(168, 85, 247, 0.15);
+            animation: floatSlow 4s ease-in-out infinite alternate;
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #10b981;
+            box-shadow: 0 0 10px #10b981, 0 0 20px #10b981;
+            animation: pulseGlow 2s infinite;
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.85); }
+        }
+
+        @keyframes floatSlow {
+            0% { transform: translateY(0px); }
+            100% { transform: translateY(-6px); }
+        }
+
         .hero h1 {
             font-family: var(--font-heading);
-            font-size: clamp(36px, 6vw, 64px);
-            font-weight: 800;
-            letter-spacing: -2px;
-            line-height: 1.1;
-            margin-bottom: 20px;
-            background: linear-gradient(135deg, #ffffff 0%, #a1a1aa 100%);
+            font-size: clamp(38px, 6.5vw, 68px);
+            font-weight: 900;
+            letter-spacing: -2.5px;
+            line-height: 1.08;
+            margin-bottom: 22px;
+            background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 50%, #94a3b8 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
-        .hero h1 span {
-            background: linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%);
+        .hero h1 span.gradient-text {
+            background: linear-gradient(135deg, #38bdf8 0%, #818cf8 50%, #c084fc 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            display: inline-block;
+            filter: drop-shadow(0 0 35px rgba(129, 140, 248, 0.35));
         }
 
-        .hero p {
-            font-size: clamp(16px, 2vw, 18px);
-            color: var(--text-muted);
-            max-width: 600px;
-            margin: 0 auto 32px auto;
-            line-height: 1.6;
+        .hero-desc {
+            font-size: clamp(16px, 2.2vw, 19px);
+            color: #94a3b8;
+            max-width: 680px;
+            margin: 0 auto 34px auto;
+            line-height: 1.65;
+            font-weight: 400;
         }
 
+        /* Hero Quick Stats Row */
+        .hero-stats {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 38px;
+        }
+
+        .stat-chip {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 999px;
+            padding: 6px 14px;
+            font-size: 12px;
+            color: #cbd5e1;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            backdrop-filter: blur(8px);
+        }
+
+        .stat-chip i {
+            color: var(--secondary);
+        }
+
+        /* Search Input Box */
         .search-container {
-            max-width: 580px;
+            max-width: 620px;
             margin: 0 auto;
             position: relative;
             z-index: 10;
         }
 
-        .search-bar {
-            width: 100%;
-            padding: 16px 24px;
-            padding-left: 52px;
-            font-size: 16px;
-            border-radius: 99px;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid var(--border-color);
-            color: var(--text-main);
-            backdrop-filter: blur(12px);
-            transition: all 0.3s;
+        .search-bar-wrapper {
+            position: relative;
+            border-radius: 999px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.02));
+            padding: 1px;
+            transition: all 0.35s ease;
+            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.4);
         }
 
-        .search-bar:focus {
+        .search-bar-wrapper:focus-within {
+            background: linear-gradient(135deg, var(--secondary), var(--primary));
+            box-shadow: 0 0 30px rgba(168, 85, 247, 0.35), 0 12px 40px rgba(0, 0, 0, 0.6);
+        }
+
+        .search-bar {
+            width: 100%;
+            padding: 18px 24px 18px 56px;
+            font-size: 15px;
+            border-radius: 999px;
+            background: rgba(8, 6, 26, 0.85);
+            border: none;
+            color: #f8fafc;
+            backdrop-filter: blur(20px);
             outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 25px var(--primary-glow);
-            background: rgba(255, 255, 255, 0.06);
+            transition: all 0.3s;
         }
 
         .search-icon {
             position: absolute;
-            left: 20px;
+            left: 22px;
             top: 50%;
             transform: translateY(-50%);
-            color: var(--text-muted);
+            color: #94a3b8;
             font-size: 18px;
+            pointer-events: none;
         }
 
-        /* Category pills list styling */
+        .search-shortcut {
+            position: absolute;
+            right: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: #94a3b8;
+            pointer-events: none;
+        }
+
+        /* 3D FX Toggle Button */
+        .btn-3d-toggle {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: #e2e8f0;
+            border-radius: 20px;
+            padding: 6px 14px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-3d-toggle:hover {
+            background: rgba(168, 85, 247, 0.2);
+            border-color: var(--primary);
+            color: #fff;
+            box-shadow: 0 0 15px rgba(168, 85, 247, 0.3);
+        }
+
+        .btn-3d-toggle.active {
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(168, 85, 247, 0.25));
+            border-color: var(--secondary);
+            color: #38bdf8;
+        }
+
+        /* Category Filter Pills */
         .category-filter {
             display: flex;
-            gap: 12px;
+            gap: 10px;
             justify-content: center;
             flex-wrap: wrap;
-            margin-top: 48px;
-            margin-bottom: 32px;
+            margin-top: 50px;
+            margin-bottom: 36px;
+            position: relative;
+            z-index: 10;
         }
 
-        /* Article Grid */
+        .category-filter .pill {
+            padding: 8px 18px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #94a3b8;
+            backdrop-filter: blur(12px);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            cursor: pointer;
+        }
+
+        .category-filter .pill:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #f1f5f9;
+            transform: translateY(-2px);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .category-filter .pill.active {
+            background: linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%);
+            color: #ffffff;
+            border-color: transparent;
+            box-shadow: 0 4px 20px rgba(168, 85, 247, 0.4), 0 0 10px rgba(6, 182, 212, 0.3);
+            transform: translateY(-2px);
+        }
+
+        /* Article Card 3D Perspective & Layout */
         .news-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-            gap: 32px;
+            gap: 30px;
             margin-bottom: 80px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .article-wrapper {
+            perspective: 1000px; /* 3D Perspective Base */
         }
 
         .article-card {
             display: flex;
             flex-direction: column;
             height: 100%;
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
+            background: rgba(12, 10, 30, 0.65);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
             overflow: hidden;
             text-decoration: none;
             color: inherit;
-            transition: all 0.4s cubic-bezier(0.15, 0.83, 0.66, 1);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            transition: transform 0.15s ease-out, box-shadow 0.3s ease, border-color 0.3s ease;
             position: relative;
+            transform-style: preserve-3d;
+        }
+
+        .article-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 20px;
+            background: radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255, 255, 255, 0.08), transparent 40%);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .article-card:hover::after {
+            opacity: 1;
         }
 
         .article-card:hover {
-            transform: translateY(-6px);
-            border-color: rgba(255, 255, 255, 0.2);
-            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4), 
-                        0 0 15px var(--secondary-glow);
+            border-color: rgba(168, 85, 247, 0.4);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 
+                        0 0 25px rgba(168, 85, 247, 0.25);
+        }
+
+        .article-image-container {
+            position: relative;
+            width: 100%;
+            height: 210px;
+            overflow: hidden;
+            background: #09071b;
         }
 
         .article-image {
             width: 100%;
-            height: 200px;
+            height: 100%;
             object-fit: cover;
-            background: rgba(255, 255, 255, 0.02);
-            border-bottom: 1px solid var(--border-color);
+            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .article-card:hover .article-image {
+            transform: scale(1.06);
+        }
+
+        /* Source Badge Dynamic Palettes */
+        .source-badge {
+            position: absolute;
+            top: 14px;
+            left: 14px;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            backdrop-filter: blur(12px);
+            z-index: 2;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        }
+
+        .source-techcrunch {
+            background: rgba(16, 185, 129, 0.25);
+            border: 1px solid rgba(16, 185, 129, 0.5);
+            color: #6ee7b7;
+        }
+
+        .source-verge {
+            background: rgba(236, 72, 153, 0.25);
+            border: 1px solid rgba(236, 72, 153, 0.5);
+            color: #f472b6;
+        }
+
+        .source-wired {
+            background: rgba(6, 182, 212, 0.25);
+            border: 1px solid rgba(6, 182, 212, 0.5);
+            color: #67e8f9;
+        }
+
+        .source-ars {
+            background: rgba(245, 158, 11, 0.25);
+            border: 1px solid rgba(245, 158, 11, 0.5);
+            color: #fcd34d;
+        }
+
+        .source-default {
+            background: rgba(168, 85, 247, 0.25);
+            border: 1px solid rgba(168, 85, 247, 0.5);
+            color: #d8b4fe;
+        }
+
+        .reading-time-badge {
+            position: absolute;
+            bottom: 14px;
+            right: 14px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: #cbd5e1;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 500;
+            backdrop-filter: blur(8px);
         }
 
         .article-body {
@@ -130,92 +414,128 @@
             flex: 1;
         }
 
+        .article-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: #94a3b8;
+            margin-bottom: 12px;
+        }
+
         .article-title {
             font-family: var(--font-heading);
-            font-size: 18px;
+            font-size: 19px;
             font-weight: 700;
-            line-height: 1.4;
-            color: var(--text-main);
-            margin-bottom: 10px;
+            line-height: 1.38;
+            color: #f8fafc;
+            margin-bottom: 14px;
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
+            transition: color 0.3s;
         }
 
-        .article-date {
-            font-size: 12px;
-            color: var(--text-muted);
+        .article-card:hover .article-title {
+            color: #38bdf8;
+        }
+
+        /* AI Key Takeaway Box */
+        .ai-summary-card {
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.08) 0%, rgba(168, 85, 247, 0.08) 100%);
+            border: 1px solid rgba(6, 182, 212, 0.25);
+            border-left: 3px solid var(--secondary);
+            border-radius: 0 10px 10px 0;
+            padding: 10px 14px;
             margin-bottom: 16px;
+        }
+
+        .ai-summary-header {
             display: flex;
             align-items: center;
             gap: 6px;
-        }
-
-        .ai-summary-badge {
-            align-self: flex-start;
-            background: rgba(6, 182, 212, 0.1);
-            border: 1px solid var(--secondary);
-            color: var(--secondary);
             font-size: 11px;
             font-weight: 700;
-            padding: 4px 8px;
-            border-radius: 4px;
-            margin-bottom: 12px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.6px;
+            color: var(--secondary);
+            margin-bottom: 6px;
         }
 
-        .article-ai-text {
+        .ai-summary-content {
             font-size: 13px;
-            color: #d4d4d8;
+            color: #e2e8f0;
+            line-height: 1.5;
             font-style: italic;
-            background: rgba(255, 255, 255, 0.02);
-            border-left: 3px solid var(--secondary);
-            padding: 8px 12px;
-            border-radius: 0 6px 6px 0;
-            margin-bottom: 16px;
         }
 
         .article-description {
             font-size: 14px;
-            color: var(--text-muted);
-            line-height: 1.5;
+            color: #94a3b8;
+            line-height: 1.6;
             display: -webkit-box;
             -webkit-line-clamp: 3;
             -webkit-box-orient: vertical;
             overflow: hidden;
-            margin-bottom: 0;
             margin-top: auto;
+            margin-bottom: 16px;
+        }
+
+        .article-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 14px;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            margin-top: auto;
+            font-size: 13px;
+            font-weight: 600;
+            color: #cbd5e1;
+        }
+
+        .read-more-link {
+            color: var(--secondary);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: gap 0.2s;
+        }
+
+        .article-card:hover .read-more-link {
+            gap: 10px;
+            color: #38bdf8;
         }
     </style>
 </head>
 <body>
-    <!-- Aurora background animations -->
-    <div class="aurora-bg">
-        <div class="aurora-element aurora-1"></div>
-        <div class="aurora-element aurora-2"></div>
-        <div class="aurora-element aurora-3"></div>
-    </div>
+    <!-- 3D Interactive WebGL Canvas -->
+    <canvas id="three-canvas"></canvas>
+    <div class="ambient-glow-layer"></div>
 
     <!-- Sticky Navbar -->
     <nav class="navbar">
         <div class="container navbar-container">
             <a href="/" class="brand">
-                <i class="fa-solid fa-cube text-secondary"></i>
+                <i class="fa-solid fa-bolt-lightning" style="color: var(--secondary);"></i>
                 TECH<span>CORE</span>
             </a>
             
             <ul class="nav-links">
-                <li><a href="/" class="nav-link active">Explore</a></li>
-                <li><a href="/chat" class="nav-link">AI Chat</a></li>
-                <li id="dashboardLink" style="display: none;"><a href="/dashboard" class="nav-link">Dashboard</a></li>
+                <li><a href="/" class="nav-link active"><i class="fa-solid fa-compass"></i> Explore</a></li>
+                <li><a href="/chat" class="nav-link"><i class="fa-solid fa-brain"></i> AI Assistant</a></li>
+                <li id="dashboardLink" style="display: none;"><a href="/dashboard" class="nav-link"><i class="fa-solid fa-sliders"></i> Dashboard</a></li>
             </ul>
 
             <div class="navbar-actions">
+                <!-- 3D FX Interactive Toggle Button -->
+                <button id="toggle3DBtn" class="btn-3d-toggle active" onclick="toggle3DParticles()" title="Toggle Interactive 3D Particles">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> <span>3D FX: ON</span>
+                </button>
+
                 <div id="authActions">
                     <button onclick="showAuthModal()" class="btn btn-primary">
-                        <i class="fa-solid fa-user"></i> Login / Register
+                        <i class="fa-solid fa-user-lock"></i> Login / Register
                     </button>
                 </div>
             </div>
@@ -227,7 +547,7 @@
         <div class="ticker">
             {% for article in articles[:5] %}
             <div class="ticker-item">
-                <strong>TRENDING:</strong> {{ article.title }}
+                <strong><i class="fa-solid fa-bolt"></i> TRENDING:</strong> {{ article.title }}
             </div>
             {% endfor %}
         </div>
@@ -236,60 +556,105 @@
     <!-- Hero Section -->
     <header class="hero">
         <div class="container">
-            <h1>Personalized <span>Tech Intelligence</span></h1>
-            <p>A next-generation tech aggregator powered by smart categorization and AI summaries. Subscribe to digests and get only what you care about.</p>
+            <div class="hero-badge-container">
+                <span class="pulse-dot"></span>
+                <span>Real-Time Multi-Source AI Aggregator</span>
+            </div>
+
+            <h1>Autonomous <span class="gradient-text">Tech Intelligence</span></h1>
+            <p class="hero-desc">Curating breaking stories from <strong>TechCrunch, The Verge, Wired, and Ars Technica</strong> with on-the-fly Groq AI synthesis and customized topic intelligence.</p>
             
+            <!-- Quick Feature Chips -->
+            <div class="hero-stats">
+                <div class="stat-chip"><i class="fa-solid fa-layer-group"></i> 4 Top Publishers</div>
+                <div class="stat-chip"><i class="fa-solid fa-microchip"></i> Groq LLaMA 3.3 Synthesis</div>
+                <div class="stat-chip"><i class="fa-solid fa-clock"></i> Indian Standard Time (IST)</div>
+                <div class="stat-chip"><i class="fa-solid fa-cube"></i> 3D Particle Space</div>
+            </div>
+
+            <!-- Glowing Search Bar with Shortcut -->
             <div class="search-container">
-                <i class="fa-solid fa-magnifying-glass search-icon"></i>
-                <input type="text" id="searchArticles" class="search-bar" placeholder="Search recent tech news..." oninput="filterArticles()">
+                <div class="search-bar-wrapper">
+                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                    <input type="text" id="searchArticles" class="search-bar" placeholder="Search breaking tech stories, AI models, startups..." oninput="filterArticles()">
+                    <span class="search-shortcut">/</span>
+                </div>
             </div>
         </div>
     </header>
 
-    <!-- Content Grid Section -->
+    <!-- Main Content Section -->
     <main class="container">
-        <!-- Category Filter Pills -->
+        <!-- Modernized Category Filter Pills with Emojis -->
         <div class="category-filter">
-            <a href="#" class="pill active" onclick="filterCategory('All', this)">All Categories</a>
-            <a href="#" class="pill" onclick="filterCategory('Artificial Intelligence', this)">Artificial Intelligence</a>
-            <a href="#" class="pill" onclick="filterCategory('Startups & Funding', this)">Startups</a>
-            <a href="#" class="pill" onclick="filterCategory('Big Tech', this)">Big Tech</a>
-            <a href="#" class="pill" onclick="filterCategory('Cybersecurity', this)">Cybersecurity</a>
-            <a href="#" class="pill" onclick="filterCategory('Mobile & Apps', this)">Mobile & Apps</a>
-            <a href="#" class="pill" onclick="filterCategory('Enterprise & SaaS', this)">Enterprise</a>
-            <a href="#" class="pill" onclick="filterCategory('Electric Vehicles', this)">EVs</a>
-            <a href="#" class="pill" onclick="filterCategory('Fintech', this)">Fintech</a>
+            <a class="pill active" onclick="filterCategory('All', this)">🌐 All Stories</a>
+            <a class="pill" onclick="filterCategory('Artificial Intelligence', this)">🤖 AI & Machine Learning</a>
+            <a class="pill" onclick="filterCategory('Startups & Funding', this)">🚀 Startups & VC</a>
+            <a class="pill" onclick="filterCategory('Big Tech', this)">🏢 Big Tech</a>
+            <a class="pill" onclick="filterCategory('Cybersecurity', this)">🔒 Cybersecurity</a>
+            <a class="pill" onclick="filterCategory('Mobile & Apps', this)">📱 Mobile & Apps</a>
+            <a class="pill" onclick="filterCategory('Enterprise & SaaS', this)">☁️ Enterprise Cloud</a>
+            <a class="pill" onclick="filterCategory('Electric Vehicles', this)">⚡ Electric Vehicles</a>
+            <a class="pill" onclick="filterCategory('Fintech', this)">💳 Fintech</a>
         </div>
 
-        <!-- News Card Grid -->
+        <!-- 3D News Card Grid -->
         <div class="news-grid" id="articlesGrid">
             {% for article in articles %}
-            <!-- We store data attributes for filtering -->
+            <!-- Article Wrapper with Data Categories -->
             <div class="article-wrapper" data-categories="{{ article.categories | map(attribute='name') | join(',') if article.categories else '' }}">
                 <a href="{{ article.link }}" class="article-card" target="_blank">
-                    <img src="{{ article.image_url or 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&auto=format&fit=crop&q=60' }}" class="article-image" alt="Article image">
+                    <div class="article-image-container">
+                        <!-- Dynamic Publisher Badge -->
+                        {% set src = article.source | lower if article.source else '' %}
+                        {% if 'crunch' in src %}
+                            <span class="source-badge source-techcrunch"><i class="fa-solid fa-bolt"></i> TechCrunch</span>
+                        {% elif 'verge' in src %}
+                            <span class="source-badge source-verge"><i class="fa-solid fa-v"></i> The Verge</span>
+                        {% elif 'wired' in src %}
+                            <span class="source-badge source-wired"><i class="fa-solid fa-terminal"></i> Wired</span>
+                        {% elif 'ars' in src %}
+                            <span class="source-badge source-ars"><i class="fa-solid fa-newspaper"></i> Ars Technica</span>
+                        {% else %}
+                            <span class="source-badge source-default"><i class="fa-solid fa-globe"></i> {{ article.source or 'Tech News' }}</span>
+                        {% endif %}
+
+                        <!-- Dynamic Reading Time Badge -->
+                        <span class="reading-time-badge"><i class="fa-regular fa-clock"></i> 2 min read</span>
+
+                        <img src="{{ article.image_url or 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&auto=format&fit=crop&q=60' }}" class="article-image" alt="Article image" loading="lazy">
+                    </div>
                     
                     <div class="article-body">
-                        <div class="article-date" style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
-                            <span style="background: rgba(129, 140, 248, 0.15); color: #a5b4fc; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;"><i class="fa-solid fa-newspaper" style="margin-right: 4px;"></i> {{ article.source or 'Tech News' }}</span>
-                            <span><i class="fa-regular fa-clock"></i> {{ article.published or 'Recently' }}</span>
+                        <div class="article-meta">
+                            <span><i class="fa-regular fa-calendar-days" style="margin-right: 4px; color: var(--secondary);"></i> {{ article.published or 'Recently' }}</span>
+                            <span style="color: #64748b;"><i class="fa-solid fa-shield-halved"></i> Verified Source</span>
                         </div>
+
                         <div class="article-title">{{ article.title }}</div>
                         
+                        <!-- AI Insight Summary Callout -->
                         {% if article.llm_summary %}
-                        <div class="ai-summary-badge">AI Summary</div>
-                        <div class="article-ai-text">{{ article.llm_summary }}</div>
+                        <div class="ai-summary-card">
+                            <div class="ai-summary-header">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i> Groq AI Key Takeaway
+                            </div>
+                            <div class="ai-summary-content">{{ article.llm_summary }}</div>
+                        </div>
                         {% endif %}
                         
                         <p class="article-description">{{ article.summary[:200] }}...</p>
+
+                        <div class="article-footer">
+                            <span>Read Full Coverage</span>
+                            <span class="read-more-link">Open Article <i class="fa-solid fa-arrow-up-right-from-square"></i></span>
+                        </div>
                     </div>
                 </a>
             </div>
             {% endfor %}
         </div>
     </main>
-
-
 
     <!-- Auth Modal -->
     <div id="authModal" class="modal">
@@ -361,10 +726,222 @@
         </div>
     </div>
 
-    <!-- Scripts -->
+    <!-- Core App Scripts -->
     <script src="/static/js/app.js"></script>
+
+    <!-- 3D Interactive Three.js Engine & Client Logic -->
     <script>
-        // Check if token exists to update header buttons
+        /* ==========================================================================
+           Three.js Interactive 3D Particle Space System
+           ========================================================================== */
+        let scene, camera, renderer, particles, particleGeometry, particleMaterial;
+        let mouseX = 0, mouseY = 0;
+        let targetX = 0, targetY = 0;
+        let is3DActive = true;
+        let animationFrameId = null;
+
+        function createCircularParticleTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 64;
+            canvas.height = 64;
+            const ctx = canvas.getContext('2d');
+            
+            const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+            gradient.addColorStop(0, 'rgba(255,255,255,1)');
+            gradient.addColorStop(0.3, 'rgba(255,255,255,0.8)');
+            gradient.addColorStop(0.6, 'rgba(168,85,247,0.35)');
+            gradient.addColorStop(1, 'rgba(0,0,0,0)');
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 64, 64);
+            
+            const texture = new THREE.Texture(canvas);
+            texture.needsUpdate = true;
+            return texture;
+        }
+
+        function initThreeJS() {
+            const canvas = document.getElementById('three-canvas');
+            if (!canvas) return;
+
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 1, 3000);
+            camera.position.z = 800;
+
+            renderer = new THREE.WebGLRenderer({
+                canvas: canvas,
+                alpha: true,
+                powerPreference: "high-performance",
+                antialias: true
+            });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+            // Generate Particles (Adjust count based on device)
+            const isMobile = window.innerWidth < 768;
+            const particleCount = isMobile ? 900 : 2600;
+            particleGeometry = new THREE.BufferGeometry();
+            
+            const positions = new Float32Array(particleCount * 3);
+            const colors = new Float32Array(particleCount * 3);
+            const scales = new Float32Array(particleCount);
+
+            const colorPalette = [
+                new THREE.Color('#a855f7'), // Purple
+                new THREE.Color('#06b6d4'), // Cyan
+                new THREE.Color('#38bdf8'), // Sky
+                new THREE.Color('#ffffff'), // White
+                new THREE.Color('#f43f5e')  // Rose
+            ];
+
+            for (let i = 0; i < particleCount; i++) {
+                // Spherical / volumetric spread
+                positions[i * 3] = (Math.random() - 0.5) * 2200;
+                positions[i * 3 + 1] = (Math.random() - 0.5) * 2200;
+                positions[i * 3 + 2] = (Math.random() - 0.5) * 1800;
+
+                const chosenColor = colorPalette[Math.floor(Math.random() * colorPalette.length)];
+                colors[i * 3] = chosenColor.r;
+                colors[i * 3 + 1] = chosenColor.g;
+                colors[i * 3 + 2] = chosenColor.b;
+
+                scales[i] = Math.random() * 8 + 4;
+            }
+
+            particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            particleGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+            particleMaterial = new THREE.PointsMaterial({
+                size: 7,
+                map: createCircularParticleTexture(),
+                transparent: true,
+                vertexColors: true,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false,
+                opacity: 0.85
+            });
+
+            particles = new THREE.Points(particleGeometry, particleMaterial);
+            scene.add(particles);
+
+            // Mouse Move Event Listener
+            window.addEventListener('mousemove', (e) => {
+                mouseX = (e.clientX - window.innerWidth / 2) * 0.45;
+                mouseY = (e.clientY - window.innerHeight / 2) * 0.45;
+            });
+
+            // Scroll Depth Displacement
+            window.addEventListener('scroll', () => {
+                const scrollProgress = window.scrollY / (document.body.scrollHeight - window.innerHeight || 1);
+                if (particles) {
+                    particles.position.z = scrollProgress * 300;
+                }
+            });
+
+            // Resize Listener
+            window.addEventListener('resize', onWindowResize);
+
+            // Tab Visibility Performance Optimizer
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) {
+                    if (animationFrameId) cancelAnimationFrame(animationFrameId);
+                } else if (is3DActive) {
+                    animate();
+                }
+            });
+
+            animate();
+        }
+
+        function onWindowResize() {
+            if (!camera || !renderer) return;
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function animate() {
+            if (!is3DActive) return;
+            animationFrameId = requestAnimationFrame(animate);
+
+            // Smooth camera lerp on mouse move
+            targetX += (mouseX - targetX) * 0.04;
+            targetY += (mouseY - targetY) * 0.04;
+
+            camera.position.x = targetX;
+            camera.position.y = -targetY;
+            camera.lookAt(scene.position);
+
+            // Ambient gentle rotation
+            if (particles) {
+                particles.rotation.y += 0.0008;
+                particles.rotation.x += 0.0003;
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        function toggle3DParticles() {
+            const btn = document.getElementById('toggle3DBtn');
+            const canvas = document.getElementById('three-canvas');
+            is3DActive = !is3DActive;
+
+            if (is3DActive) {
+                btn.className = 'btn-3d-toggle active';
+                btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> <span>3D FX: ON</span>';
+                if (canvas) canvas.classList.remove('disabled-3d');
+                animate();
+            } else {
+                btn.className = 'btn-3d-toggle';
+                btn.innerHTML = '<i class="fa-solid fa-power-off"></i> <span>3D FX: OFF</span>';
+                if (canvas) canvas.classList.add('disabled-3d');
+                if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            }
+        }
+
+        /* ==========================================================================
+           3D Interactive Card Hover Tilt Physics
+           ========================================================================== */
+        function init3DCardTilt() {
+            const cards = document.querySelectorAll('.article-card');
+            cards.forEach(card => {
+                card.addEventListener('mousemove', (e) => {
+                    const rect = card.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    
+                    const centerX = rect.width / 2;
+                    const centerY = rect.height / 2;
+                    
+                    const rotateX = ((y - centerY) / centerY) * -10;
+                    const rotateY = ((x - centerX) / centerX) * 10;
+                    
+                    card.style.transform = `perspective(1000px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) translateZ(10px)`;
+                    card.style.setProperty('--mouse-x', `${x}px`);
+                    card.style.setProperty('--mouse-y', `${y}px`);
+                });
+
+                card.addEventListener('mouseleave', () => {
+                    card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateZ(0px)';
+                });
+            });
+        }
+
+        // Global Keydown Search Shortcut (Press '/' to focus search)
+        document.addEventListener('keydown', (e) => {
+            if (e.key === '/' && document.activeElement.tagName !== 'INPUT') {
+                e.preventDefault();
+                const search = document.getElementById('searchArticles');
+                if (search) {
+                    search.focus();
+                    search.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+        });
+
+        /* ==========================================================================
+           Auth Check & Dynamic Navigation
+           ========================================================================== */
         const token = localStorage.getItem('authToken');
         if (token) {
             document.getElementById('dashboardLink').style.display = 'block';
@@ -388,16 +965,15 @@
             }).catch(() => {});
         }
 
-        // Frontend Client Filters
+        /* ==========================================================================
+           Category Filtering & Search
+           ========================================================================== */
         let currentCategory = 'All';
 
         function filterCategory(categoryName, element) {
             currentCategory = categoryName;
-            
-            // Toggle active pill styling
             document.querySelectorAll('.category-filter .pill').forEach(pill => pill.classList.remove('active'));
             element.classList.add('active');
-            
             applyFilters();
         }
 
@@ -416,7 +992,7 @@
                 
                 const titleElem = card.querySelector('.article-title');
                 const descElem = card.querySelector('.article-description');
-                const aiSummaryElem = card.querySelector('.article-ai-text');
+                const aiSummaryElem = card.querySelector('.ai-summary-content');
                 
                 const title = titleElem ? titleElem.textContent.toLowerCase() : '';
                 const description = descElem ? descElem.textContent.toLowerCase() : '';
@@ -435,7 +1011,9 @@
             });
         }
 
-        // Modal triggers
+        /* ==========================================================================
+           Auth Modal Operations
+           ========================================================================== */
         function showAuthModal() {
             toggleModal('authModal', true);
             showRegister();
@@ -458,7 +1036,6 @@
             document.getElementById('loginTab').className = 'btn btn-primary';
         }
 
-        // Auth Operations
         function showMessage(text, isError = false) {
             const messageDiv = document.getElementById('authMessage');
             messageDiv.style.display = 'block';
@@ -487,7 +1064,6 @@
                 
                 if (response.ok) {
                     showMessage('Account created successfully! Logging in...');
-                    // Automatically log in
                     setTimeout(async () => {
                         const formData = new FormData();
                         formData.append('username', email);
@@ -570,6 +1146,12 @@
                 showMessage('Google Authentication error. Please try again.', true);
             }
         }
+
+        // Initialize on DOM Ready
+        document.addEventListener('DOMContentLoaded', () => {
+            initThreeJS();
+            init3DCardTilt();
+        });
     </script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 </body>
