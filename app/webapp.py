@@ -500,13 +500,61 @@ def format_published_ist(pub_str, created_at_dt=None):
 
 from sqlalchemy.orm import joinedload
 
+@app.get("/api/articles/feed")
+def get_articles_feed(
+    page: int = 1,
+    limit: int = 40,
+    category: Optional[str] = None,
+    search: Optional[str] = None,
+    db: Session = Depends(get_db)
+):
+    """Paginated feed endpoint for 7-day infinite scroll, ordered by created_at desc (40 per batch)"""
+    query = db.query(Article).options(joinedload(Article.categories).joinedload(ArticleCategory.category))
+    
+    if category and category != "All":
+        query = query.join(Article.categories).join(ArticleCategory.category).filter(Category.name == category)
+        
+    if search:
+        search_pattern = f"%{search.strip()}%"
+        query = query.filter(
+            (Article.title.ilike(search_pattern)) | 
+            (Article.summary.ilike(search_pattern)) | 
+            (Article.llm_summary.ilike(search_pattern))
+        )
+        
+    total = query.count()
+    offset = (page - 1) * limit
+    articles = query.order_by(Article.created_at.desc()).offset(offset).limit(limit).all()
+    
+    data = []
+    for art in articles:
+        data.append({
+            'id': art.id,
+            'title': art.title,
+            'link': art.link,
+            'summary': art.summary or '',
+            'llm_summary': art.llm_summary or '',
+            'published': format_published_ist(art.published, art.created_at),
+            'image_url': art.image_url or PLACEHOLDER_IMAGE,
+            'source': getattr(art, 'source', 'TechNews') or 'TechNews',
+            'categories': [ac.category.name for ac in art.categories if ac.category]
+        })
+        
+    return {
+        'page': page,
+        'limit': limit,
+        'total': total,
+        'has_more': (offset + len(articles)) < total,
+        'articles': data
+    }
+
 @app.get('/', response_class=HTMLResponse)
 def read_cards(request: Request, db: Session = Depends(get_db)):
     db_articles = (
         db.query(Article)
         .options(joinedload(Article.categories).joinedload(ArticleCategory.category))
         .order_by(Article.created_at.desc())
-        .limit(60)
+        .limit(40)
         .all()
     )
     if not db_articles:
@@ -515,13 +563,14 @@ def read_cards(request: Request, db: Session = Depends(get_db)):
             db.query(Article)
             .options(joinedload(Article.categories).joinedload(ArticleCategory.category))
             .order_by(Article.created_at.desc())
-            .limit(60)
+            .limit(40)
             .all()
         )
             
     articles = []
     for art in db_articles:
         articles.append({
+            'id': art.id,
             'title': art.title,
             'link': art.link,
             'summary': art.summary or '',

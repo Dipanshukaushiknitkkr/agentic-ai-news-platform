@@ -666,6 +666,16 @@
             </div>
             {% endfor %}
         </div>
+
+        <!-- Infinite Scroll Sentinel & Loading Indicator -->
+        <div id="infiniteScrollSentinel" style="text-align: center; padding: 30px 20px; width: 100%;">
+            <div id="infiniteScrollLoading" style="display: none; color: var(--secondary); font-weight: 600; font-size: 14px;">
+                <i class="fa-solid fa-spinner fa-spin" style="margin-right: 8px;"></i> Loading more stories from the last 7 days...
+            </div>
+            <div id="infiniteScrollEnd" style="display: none; color: var(--text-muted); font-size: 13px;">
+                <i class="fa-solid fa-circle-check" style="color: #10b981; margin-right: 6px;"></i> You're all caught up on the last 7 days of tech news!
+            </div>
+        </div>
     </main>
 
     <!-- Auth Modal -->
@@ -976,47 +986,182 @@
         }
 
         /* ==========================================================================
-           Category Filtering & Search
+           7-Day Infinite Scroll & Dynamic Progressive Feed (40 per batch)
            ========================================================================== */
+        let feedPage = 1;
+        let feedLoading = false;
+        let feedHasMore = true;
         let currentCategory = 'All';
+        let searchDebounce = null;
+
+        function getPublisherBadgeHTML(source) {
+            const src = (source || '').toLowerCase();
+            if (src.includes('crunch')) {
+                return '<span class="source-badge source-techcrunch"><i class="fa-solid fa-bolt"></i> TechCrunch</span>';
+            } else if (src.includes('verge')) {
+                return '<span class="source-badge source-verge"><i class="fa-solid fa-v"></i> The Verge</span>';
+            } else if (src.includes('wired')) {
+                return '<span class="source-badge source-wired"><i class="fa-solid fa-terminal"></i> Wired</span>';
+            } else if (src.includes('ars')) {
+                return '<span class="source-badge source-ars"><i class="fa-solid fa-newspaper"></i> Ars Technica</span>';
+            } else {
+                return `<span class="source-badge source-default"><i class="fa-solid fa-globe"></i> ${source || 'Tech News'}</span>`;
+            }
+        }
+
+        function buildCardElement(art) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'article-wrapper';
+            wrapper.dataset.categories = (art.categories || []).join(',');
+
+            const summaryText = art.llm_summary || art.summary || 'No summary available.';
+            const imageSrc = art.image_url || 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&auto=format&fit=crop&q=60';
+
+            wrapper.innerHTML = `
+                <a href="${art.link}" class="article-card" target="_blank">
+                    <div class="article-image-container">
+                        ${getPublisherBadgeHTML(art.source)}
+                        <span class="reading-time-badge"><i class="fa-regular fa-clock"></i> 2 min read</span>
+                        <img src="${imageSrc}" class="article-image" alt="Article image" loading="lazy">
+                    </div>
+                    <div class="article-body">
+                        <div class="article-meta">
+                            <span><i class="fa-regular fa-calendar-days" style="margin-right: 4px; color: var(--secondary);"></i> ${art.published || 'Recently'}</span>
+                            <span style="color: #64748b;"><i class="fa-solid fa-shield-halved"></i> Verified Source</span>
+                        </div>
+                        <div class="article-title">${art.title}</div>
+                        <div class="ai-summary-card">
+                            <div class="ai-summary-header">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i> Summary
+                            </div>
+                            <div class="ai-summary-content">
+                                ${summaryText}
+                            </div>
+                        </div>
+                        <div class="article-footer">
+                            <span>Read Full Coverage</span>
+                            <span class="read-more-link">Open Article <i class="fa-solid fa-arrow-up-right-from-square"></i></span>
+                        </div>
+                    </div>
+                </a>
+            `;
+            return wrapper;
+        }
+
+        async function loadMoreArticles() {
+            if (feedLoading || !feedHasMore) return;
+            feedLoading = true;
+
+            const loadingIndicator = document.getElementById('infiniteScrollLoading');
+            const endIndicator = document.getElementById('infiniteScrollEnd');
+            if (loadingIndicator) loadingIndicator.style.display = 'block';
+
+            const searchInput = document.getElementById('searchArticles');
+            const query = searchInput ? searchInput.value.trim() : '';
+            const nextPage = feedPage + 1;
+
+            try {
+                const url = `/api/articles/feed?page=${nextPage}&limit=40&category=${encodeURIComponent(currentCategory)}&search=${encodeURIComponent(query)}`;
+                const res = await fetch(url);
+                if (res.ok) {
+                    const data = await res.json();
+                    feedPage = data.page;
+                    feedHasMore = data.has_more;
+
+                    const grid = document.getElementById('articlesGrid');
+                    if (data.articles && data.articles.length > 0) {
+                        data.articles.forEach(art => {
+                            const cardEl = buildCardElement(art);
+                            grid.appendChild(cardEl);
+                        });
+                        init3DCardTilt();
+                    }
+
+                    if (!feedHasMore) {
+                        if (endIndicator) endIndicator.style.display = 'block';
+                    }
+                }
+            } catch (err) {
+                console.error('Error fetching 7-day news feed:', err);
+            } finally {
+                feedLoading = false;
+                if (loadingIndicator) loadingIndicator.style.display = 'none';
+            }
+        }
+
+        async function resetAndLoadFeed() {
+            feedPage = 1;
+            feedHasMore = true;
+            feedLoading = true;
+
+            const grid = document.getElementById('articlesGrid');
+            const loadingIndicator = document.getElementById('infiniteScrollLoading');
+            const endIndicator = document.getElementById('infiniteScrollEnd');
+
+            if (loadingIndicator) loadingIndicator.style.display = 'block';
+            if (endIndicator) endIndicator.style.display = 'none';
+
+            const searchInput = document.getElementById('searchArticles');
+            const query = searchInput ? searchInput.value.trim() : '';
+
+            try {
+                const url = `/api/articles/feed?page=1&limit=40&category=${encodeURIComponent(currentCategory)}&search=${encodeURIComponent(query)}`;
+                const res = await fetch(url);
+                if (res.ok) {
+                    const data = await res.json();
+                    feedHasMore = data.has_more;
+                    grid.innerHTML = '';
+
+                    if (data.articles && data.articles.length > 0) {
+                        data.articles.forEach(art => {
+                            const cardEl = buildCardElement(art);
+                            grid.appendChild(cardEl);
+                        });
+                        init3DCardTilt();
+                    } else {
+                        grid.innerHTML = '<div style="text-align: center; grid-column: 1/-1; padding: 60px 20px; color: var(--text-muted); font-size: 15px;"><i class="fa-solid fa-magnifying-glass" style="font-size: 28px; margin-bottom: 12px; display: block;"></i> No stories found matching this query in the last 7 days.</div>';
+                    }
+
+                    if (!feedHasMore && data.articles.length > 0) {
+                        if (endIndicator) endIndicator.style.display = 'block';
+                    }
+                }
+            } catch (err) {
+                console.error('Error loading initial feed:', err);
+            } finally {
+                feedLoading = false;
+                if (loadingIndicator) loadingIndicator.style.display = 'none';
+            }
+        }
 
         function filterCategory(categoryName, element) {
             currentCategory = categoryName;
             document.querySelectorAll('.category-filter .pill').forEach(pill => pill.classList.remove('active'));
             element.classList.add('active');
-            applyFilters();
+            resetAndLoadFeed();
         }
 
         function filterArticles() {
-            applyFilters();
+            clearTimeout(searchDebounce);
+            searchDebounce = setTimeout(resetAndLoadFeed, 300);
         }
 
-        function applyFilters() {
-            const searchInput = document.getElementById('searchArticles');
-            const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
-            const wrappers = document.querySelectorAll('#articlesGrid .article-wrapper');
-            
-            wrappers.forEach(wrapper => {
-                const card = wrapper.querySelector('.article-card');
-                if (!card) return;
-                
-                const titleElem = card.querySelector('.article-title');
-                const aiSummaryElem = card.querySelector('.ai-summary-content');
-                
-                const title = titleElem ? titleElem.textContent.toLowerCase() : '';
-                const aiSummary = aiSummaryElem ? aiSummaryElem.textContent.toLowerCase() : '';
-                
-                const categories = wrapper.dataset.categories ? wrapper.dataset.categories.split(',') : [];
-                
-                const matchesSearch = !query || title.includes(query) || aiSummary.includes(query);
-                const matchesCategory = currentCategory === 'All' || categories.includes(currentCategory);
-                
-                if (matchesSearch && matchesCategory) {
-                    wrapper.style.display = 'block';
-                } else {
-                    wrapper.style.display = 'none';
-                }
+        // Setup Intersection Observer for Infinite Scrolling
+        function initInfiniteScrollObserver() {
+            const sentinel = document.getElementById('infiniteScrollSentinel');
+            if (!sentinel) return;
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting && feedHasMore && !feedLoading) {
+                        loadMoreArticles();
+                    }
+                });
+            }, {
+                rootMargin: '400px' // Start loading 400px before user hits bottom
             });
+
+            observer.observe(sentinel);
         }
 
         /* ==========================================================================
@@ -1159,6 +1304,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             initThreeJS();
             init3DCardTilt();
+            initInfiniteScrollObserver();
         });
     </script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
