@@ -658,7 +658,7 @@
                         </div>
 
                         <div class="article-footer">
-                            <button onclick="toggleBookmark('{{ article.id }}', '{{ article.title | replace(\"'\", \"\\\\'\") }}', '{{ article.link }}', '{{ article.source }}', '{{ article.published }}', event)" class="btn-bookmark-action" data-art-id="{{ article.id }}" style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 4px 10px; font-size: 12px; color: #cbd5e1; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;">
+                            <button onclick="handleBookmarkClick(this, event)" class="btn-bookmark-action" data-art-id="{{ article.id }}" data-title="{{ article.title | e }}" data-link="{{ article.link }}" data-source="{{ article.source }}" data-published="{{ article.published }}" style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 4px 10px; font-size: 12px; color: #cbd5e1; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;">
                                 <i class="fa-regular fa-bookmark"></i> Save
                             </button>
                             <span class="read-more-link">Open Story <i class="fa-solid fa-arrow-up-right-from-square"></i></span>
@@ -1041,7 +1041,7 @@
                             </div>
                         </div>
                         <div class="article-footer">
-                            <button onclick="toggleBookmark('${art.id}', '${(art.title || '').replace(/'/g, "\\'")}', '${art.link}', '${art.source}', '${art.published}', event)" class="btn-bookmark-action" data-art-id="${art.id}" style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 4px 10px; font-size: 12px; color: #cbd5e1; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;">
+                            <button onclick="handleBookmarkClick(this, event)" class="btn-bookmark-action" data-art-id="${art.id}" data-title="${(art.title || '').replace(/"/g, '&quot;')}" data-link="${art.link}" data-source="${art.source}" data-published="${art.published}" style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 4px 10px; font-size: 12px; color: #cbd5e1; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;">
                                 <i class="fa-regular fa-bookmark"></i> Save
                             </button>
                             <span class="read-more-link">Open Story <i class="fa-solid fa-arrow-up-right-from-square"></i></span>
@@ -1052,11 +1052,20 @@
             return wrapper;
         }
 
-        function toggleBookmark(artId, title, link, source, published, event) {
+        function handleBookmarkClick(btn, event) {
             if (event) {
                 event.preventDefault();
                 event.stopPropagation();
             }
+            const id = btn.dataset.artId;
+            const title = btn.dataset.title;
+            const link = btn.dataset.link;
+            const source = btn.dataset.source;
+            const published = btn.dataset.published;
+            toggleBookmark(id, title, link, source, published);
+        }
+
+        function toggleBookmark(artId, title, link, source, published) {
             let bookmarks = JSON.parse(localStorage.getItem('techcore_bookmarks') || '[]');
             const index = bookmarks.findIndex(b => b.id === artId);
             if (index > -1) {
