@@ -3,19 +3,72 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Operations Portal — TechCore</title>
+    <title>Admin Command Center — TechCore</title>
     <!-- Google Fonts & FontAwesome -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/static/css/style.css">
     <style>
+        :root {
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
         .admin-header {
-            margin-bottom: 30px;
+            margin-bottom: 24px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
         }
 
+        /* Modern Tabs Navigation */
+        .admin-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 28px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 12px;
+            overflow-x: auto;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-muted);
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.25s ease;
+            white-space: nowrap;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.15), rgba(168, 85, 247, 0.2));
+            color: #ffffff;
+            border-color: rgba(168, 85, 247, 0.4);
+            box-shadow: 0 0 15px rgba(168, 85, 247, 0.2);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Stats Grid */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -81,15 +134,115 @@
             border: 1px solid rgba(129, 140, 248, 0.25);
         }
 
-        .alert-box {
-            padding: 14px 18px;
-            border-radius: 10px;
-            font-size: 14px;
-            font-weight: 500;
-            margin-top: 15px;
-            display: none;
+        /* Modern Data Table */
+        .admin-table-container {
+            overflow-x: auto;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(8, 6, 20, 0.6);
         }
 
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13.5px;
+            text-align: left;
+        }
+
+        .admin-table th {
+            background: rgba(255, 255, 255, 0.04);
+            padding: 14px 18px;
+            font-weight: 700;
+            color: #94a3b8;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+        }
+
+        .admin-table td {
+            padding: 14px 18px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            color: #cbd5e1;
+            vertical-align: middle;
+        }
+
+        .admin-table tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .btn-table-action {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-action-resummarize {
+            background: rgba(6, 182, 212, 0.15);
+            border: 1px solid rgba(6, 182, 212, 0.4);
+            color: #67e8f9;
+        }
+
+        .btn-action-resummarize:hover {
+            background: rgba(6, 182, 212, 0.3);
+            color: #fff;
+        }
+
+        .btn-action-delete {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            color: #fca5a5;
+        }
+
+        .btn-action-delete:hover {
+            background: rgba(239, 68, 68, 0.3);
+            color: #fff;
+        }
+
+        /* Terminal Activity Logs */
+        .terminal-box {
+            background: #04020c;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 14px;
+            padding: 18px 22px;
+            font-family: var(--font-mono);
+            font-size: 13px;
+            color: #a7f3d0;
+            max-height: 420px;
+            overflow-y: auto;
+            line-height: 1.7;
+        }
+
+        .log-entry {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 6px;
+        }
+
+        .log-time {
+            color: #64748b;
+            font-size: 11px;
+            min-width: 140px;
+        }
+
+        .log-level-info {
+            color: #38bdf8;
+            font-weight: 600;
+        }
+
+        .log-level-error {
+            color: #f87171;
+            font-weight: 600;
+        }
+
+        /* Inline Auth Card */
         .admin-login-card {
             max-width: 440px;
             margin: 40px auto;
@@ -99,6 +252,15 @@
             border: 1px solid rgba(168, 85, 247, 0.3);
             box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(168, 85, 247, 0.2);
             text-align: center;
+        }
+
+        .alert-box {
+            padding: 14px 18px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 500;
+            margin-top: 15px;
+            display: none;
         }
     </style>
 </head>
@@ -115,19 +277,19 @@
                 <li><a href="/" class="nav-link"><i class="fa-solid fa-compass"></i> Explore</a></li>
                 <li><a href="/chat" class="nav-link"><i class="fa-solid fa-brain"></i> AI Assistant</a></li>
                 <li><a href="/dashboard" class="nav-link"><i class="fa-solid fa-sliders"></i> Dashboard</a></li>
-                <li><a href="/admin" class="nav-link active" style="color: #f59e0b; font-weight: 700;"><i class="fa-solid fa-crown"></i> Admin</a></li>
+                <li><a href="/admin" class="nav-link active" style="color: #f59e0b; font-weight: 700;"><i class="fa-solid fa-crown"></i> Admin Hub</a></li>
             </ul>
 
             <div class="navbar-actions">
-                <a href="/" class="btn btn-secondary"><i class="fa-solid fa-arrow-left"></i> Back to Site</a>
+                <a href="/" class="btn btn-secondary"><i class="fa-solid fa-arrow-left"></i> Return to Site</a>
             </div>
         </div>
     </nav>
 
-    <!-- Main Admin Container -->
+    <!-- Main Container -->
     <main class="container" style="padding-top: 110px; padding-bottom: 60px;">
         
-        <!-- Interactive Inline Admin Login Form (if not authenticated) -->
+        <!-- Inline Admin Login Form (if token missing or expired) -->
         <div id="adminLoginSection" class="admin-login-card" style="display: none;">
             <div style="width: 60px; height: 60px; border-radius: 16px; background: rgba(245, 158, 11, 0.15); color: #f59e0b; display: flex; align-items: center; justify-content: center; font-size: 28px; margin: 0 auto 18px auto;">
                 <i class="fa-solid fa-crown"></i>
@@ -164,81 +326,241 @@
             <div id="adminLoginAlert" class="alert-box" style="margin-top: 18px;"></div>
         </div>
 
-        <!-- Access Denied (Non-Admin User) -->
+        <!-- Access Denied Card -->
         <div id="accessDenied" style="display: none; text-align: center; padding: 60px 20px;" class="glass-card">
             <i class="fa-solid fa-shield-halved" style="font-size: 54px; color: #ef4444; margin-bottom: 20px;"></i>
             <h2>Admin Privilege Required</h2>
-            <p style="color: var(--text-muted); margin: 12px 0 24px 0;">Your account does not have admin permissions. Please sign in as <strong>18dkkaushik@gmail.com</strong>.</p>
+            <p style="color: var(--text-muted); margin: 12px 0 24px 0;">Your current account does not have admin permissions. Please sign in as <strong>18dkkaushik@gmail.com</strong>.</p>
             <button onclick="logoutAndShowLogin()" class="btn btn-primary"><i class="fa-solid fa-arrow-right-to-bracket"></i> Switch Account</button>
         </div>
 
-        <!-- Authorized Admin Control Panel -->
+        <!-- Full Authorized Admin Control Dashboard -->
         <div id="adminContent" style="display: none;">
             <div class="admin-header">
                 <div>
                     <h1 style="font-family: var(--font-heading); font-size: 28px; font-weight: 800; margin-bottom: 4px;">
-                        <i class="fa-solid fa-crown" style="color: #f59e0b;"></i> Admin Operations Control
+                        <i class="fa-solid fa-crown" style="color: #f59e0b;"></i> Admin Command Center
                     </h1>
-                    <p style="color: var(--text-muted); font-size: 14px;">Manage multi-source scraping, live background schedulers, and database metrics.</p>
+                    <p style="color: var(--text-muted); font-size: 14px;">Manage multi-source scraping, article database, user privileges, and Groq AI parameters.</p>
                 </div>
             </div>
 
-            <!-- Stats Grid -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-icon"><i class="fa-solid fa-users"></i></div>
-                    <div>
-                        <div class="stat-val" id="statUsers">0</div>
-                        <div class="stat-lbl">Registered Users</div>
+            <!-- Tabbed Navigation Bar -->
+            <div class="admin-tabs">
+                <button class="tab-btn active" onclick="switchTab('tabOverview', this)"><i class="fa-solid fa-chart-pie"></i> Overview & Stats</button>
+                <button class="tab-btn" onclick="switchTab('tabArticles', this)"><i class="fa-solid fa-newspaper"></i> Article Manager</button>
+                <button class="tab-btn" onclick="switchTab('tabUsers', this)"><i class="fa-solid fa-users-gear"></i> User Directory</button>
+                <button class="tab-btn" onclick="switchTab('tabLogs', this)"><i class="fa-solid fa-terminal"></i> Activity Console</button>
+                <button class="tab-btn" onclick="switchTab('tabAISettings', this)"><i class="fa-solid fa-sliders"></i> AI Settings</button>
+            </div>
+
+            <!-- TAB 1: OVERVIEW & SYSTEM STATS -->
+            <div id="tabOverview" class="tab-content active">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fa-solid fa-users"></i></div>
+                        <div>
+                            <div class="stat-val" id="statUsers">0</div>
+                            <div class="stat-lbl">Registered Users</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon" style="color: #38bdf8; background: rgba(56, 189, 248, 0.15);"><i class="fa-solid fa-newspaper"></i></div>
+                        <div>
+                            <div class="stat-val" id="statArticles">0</div>
+                            <div class="stat-lbl">Database Articles</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon" style="color: #10b981; background: rgba(16, 185, 129, 0.15);"><i class="fa-solid fa-clock-rotate-left"></i></div>
+                        <div>
+                            <div class="stat-val" id="statScheduler" style="color: #10b981;">Active 24/7</div>
+                            <div class="stat-lbl">Background News Scheduler</div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="stat-card">
-                    <div class="stat-icon" style="color: #38bdf8; background: rgba(56, 189, 248, 0.15);"><i class="fa-solid fa-newspaper"></i></div>
-                    <div>
-                        <div class="stat-val" id="statArticles">0</div>
-                        <div class="stat-lbl">Database Articles</div>
+                <div class="control-panel glass-card">
+                    <h3 style="font-size: 19px; font-weight: 700; margin-bottom: 10px;">
+                        <i class="fa-solid fa-gears" style="color: var(--secondary);"></i> Manual Multi-Source Scrape Trigger
+                    </h3>
+                    <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px; line-height: 1.6;">
+                        Trigger an instant on-demand scrape across <strong>TechCrunch, The Verge, Wired, and Ars Technica</strong> feeds with real-time Groq AI summarization and PostgreSQL database sync.
+                    </p>
+
+                    <button id="scrapeBtn" onclick="triggerScrape()" class="btn btn-primary" style="padding: 14px 28px; font-size: 15px;">
+                        <i class="fa-solid fa-rotate-right" id="scrapeIcon"></i> Trigger Multi-Source Scrape & Sync Now
+                    </button>
+
+                    <div id="scrapeAlert" class="alert-box"></div>
+                </div>
+
+                <div class="control-panel glass-card">
+                    <h3 style="font-size: 19px; font-weight: 700; margin-bottom: 16px;">
+                        <i class="fa-solid fa-layer-group" style="color: var(--primary);"></i> Live Publisher Story Breakdown
+                    </h3>
+                    <div id="publishersList">
+                        <span class="pub-badge">Loading publishers...</span>
                     </div>
                 </div>
+            </div>
 
-                <div class="stat-card">
-                    <div class="stat-icon" style="color: #10b981; background: rgba(16, 185, 129, 0.15);"><i class="fa-solid fa-clock-rotate-left"></i></div>
-                    <div>
-                        <div class="stat-val" id="statScheduler" style="color: #10b981;">Active 24/7</div>
-                        <div class="stat-lbl">Background News Scheduler</div>
+            <!-- TAB 2: ARTICLE MANAGEMENT TABLE -->
+            <div id="tabArticles" class="tab-content">
+                <div class="control-panel glass-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-bottom: 20px;">
+                        <div>
+                            <h3 style="font-size: 19px; font-weight: 700; margin-bottom: 4px;"><i class="fa-solid fa-newspaper" style="color: var(--secondary);"></i> Article Database Manager</h3>
+                            <p style="color: var(--text-muted); font-size: 13px;">Manage database records, regenerate AI summaries, and purge outdated stories.</p>
+                        </div>
+                        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                            <input type="text" id="adminArticleSearch" class="input-field" placeholder="Search by title..." style="padding: 8px 14px; font-size: 13px; width: 220px;" oninput="fetchArticlesTable(1)">
+                            <select id="adminPublisherFilter" class="input-field" style="padding: 8px 14px; font-size: 13px;" onchange="fetchArticlesTable(1)">
+                                <option value="All">All Publishers</option>
+                                <option value="TechCrunch">TechCrunch</option>
+                                <option value="The Verge">The Verge</option>
+                                <option value="Wired">Wired</option>
+                                <option value="Ars Technica">Ars Technica</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="admin-table-container">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Story Title</th>
+                                    <th>Publisher</th>
+                                    <th>Published (IST)</th>
+                                    <th>AI Summary Status</th>
+                                    <th style="text-align: right;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminArticlesTbody">
+                                <tr><td colspan="5" style="text-align: center; padding: 30px;">Loading articles...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination Controls -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 18px; font-size: 13px; color: var(--text-muted);">
+                        <span id="articlePaginationInfo">Showing page 1</span>
+                        <div style="display: flex; gap: 8px;">
+                            <button id="btnPrevArticles" onclick="changeArticlePage(-1)" class="btn btn-secondary" style="padding: 6px 14px; font-size: 12px;"><i class="fa-solid fa-chevron-left"></i> Previous</button>
+                            <button id="btnNextArticles" onclick="changeArticlePage(1)" class="btn btn-secondary" style="padding: 6px 14px; font-size: 12px;">Next <i class="fa-solid fa-chevron-right"></i></button>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Controls Panel -->
-            <div class="control-panel glass-card">
-                <h3 style="font-size: 19px; font-weight: 700; margin-bottom: 10px;">
-                    <i class="fa-solid fa-gears" style="color: var(--secondary);"></i> Manual Multi-Source Scrape Trigger
-                </h3>
-                <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px; line-height: 1.6;">
-                    Trigger an instant on-demand scrape across <strong>TechCrunch, The Verge, Wired, and Ars Technica</strong> feeds with real-time Groq AI summarization and PostgreSQL database sync.
-                </p>
+            <!-- TAB 3: USER DIRECTORY & ROLES -->
+            <div id="tabUsers" class="tab-content">
+                <div class="control-panel glass-card">
+                    <div style="margin-bottom: 20px;">
+                        <h3 style="font-size: 19px; font-weight: 700; margin-bottom: 4px;"><i class="fa-solid fa-users-gear" style="color: var(--primary);"></i> User & Role Directory</h3>
+                        <p style="color: var(--text-muted); font-size: 13px;">View registered accounts and manage admin authority privileges.</p>
+                    </div>
 
-                <button id="scrapeBtn" onclick="triggerScrape()" class="btn btn-primary" style="padding: 14px 28px; font-size: 15px;">
-                    <i class="fa-solid fa-rotate-right" id="scrapeIcon"></i> Trigger Multi-Source Scrape & Sync Now
-                </button>
-
-                <div id="scrapeAlert" class="alert-box"></div>
-            </div>
-
-            <!-- Publisher Breakdown -->
-            <div class="control-panel glass-card">
-                <h3 style="font-size: 19px; font-weight: 700; margin-bottom: 16px;">
-                    <i class="fa-solid fa-layer-group" style="color: var(--primary);"></i> Live Publisher Story Breakdown
-                </h3>
-                <div id="publishersList">
-                    <span class="pub-badge">Loading publishers...</span>
+                    <div class="admin-table-container">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>User ID</th>
+                                    <th>Full Name</th>
+                                    <th>Email Address</th>
+                                    <th>Registration Date (IST)</th>
+                                    <th>Role Status</th>
+                                    <th style="text-align: right;">Toggle Role</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminUsersTbody">
+                                <tr><td colspan="6" style="text-align: center; padding: 30px;">Loading user accounts...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
+
+            <!-- TAB 4: LIVE ACTIVITY CONSOLE -->
+            <div id="tabLogs" class="tab-content">
+                <div class="control-panel glass-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
+                        <div>
+                            <h3 style="font-size: 19px; font-weight: 700; margin-bottom: 4px;"><i class="fa-solid fa-terminal" style="color: #38bdf8;"></i> Live Activity Console</h3>
+                            <p style="color: var(--text-muted); font-size: 13px;">Real-time feed ingestion events, LLM summarization status, and system operations.</p>
+                        </div>
+                        <button onclick="fetchActivityLogs()" class="btn btn-secondary" style="padding: 8px 16px; font-size: 13px;">
+                            <i class="fa-solid fa-rotate"></i> Refresh Logs
+                        </button>
+                    </div>
+
+                    <div class="terminal-box" id="adminTerminalLogs">
+                        <div class="log-entry"><span class="log-time">[Console Initializing]</span> <span>Awaiting real-time stream logs...</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 5: AI SETTINGS & MODEL SWITCHER -->
+            <div id="tabAISettings" class="tab-content">
+                <div class="control-panel glass-card" style="max-width: 680px;">
+                    <div style="margin-bottom: 24px;">
+                        <h3 style="font-size: 19px; font-weight: 700; margin-bottom: 4px;"><i class="fa-solid fa-sliders" style="color: #c084fc;"></i> Groq AI Model & Parameters</h3>
+                        <p style="color: var(--text-muted); font-size: 13px;">Switch summarization LLM models and configure sampling temperature on the fly.</p>
+                    </div>
+
+                    <div class="input-group">
+                        <span class="input-label">Active Groq Model</span>
+                        <select id="aiModelSelect" class="input-field" style="padding: 12px 16px;">
+                            <option value="openai/gpt-oss-120b">openai/gpt-oss-120b (Recommended - High Accuracy)</option>
+                            <option value="openai/gpt-oss-20b">openai/gpt-oss-20b (Ultra Fast)</option>
+                            <option value="llama-3.3-70b-versatile">llama-3.3-70b-versatile</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group" style="margin-top: 18px;">
+                        <div style="display: flex; justify-content: space-between;">
+                            <span class="input-label">Creativity / Temperature:</span>
+                            <span id="tempValueDisplay" style="color: var(--secondary); font-weight: 700; font-family: var(--font-mono);">0.7</span>
+                        </div>
+                        <input type="range" id="aiTempSlider" min="0.0" max="1.0" step="0.05" value="0.7" style="width: 100%; accent-color: var(--primary);" oninput="document.getElementById('tempValueDisplay').textContent = this.value">
+                    </div>
+
+                    <div class="input-group" style="margin-top: 18px;">
+                        <span class="input-label">Max Token Output Limit</span>
+                        <input type="number" id="aiMaxTokensInput" class="input-field" value="150" min="50" max="800">
+                    </div>
+
+                    <button onclick="saveAISettings()" class="btn btn-primary" style="margin-top: 14px; padding: 12px 24px;">
+                        <i class="fa-solid fa-floppy-disk"></i> Save AI Configuration
+                    </button>
+
+                    <div id="aiSettingsAlert" class="alert-box"></div>
+                </div>
+            </div>
+
         </div>
     </main>
 
+    <!-- Admin Client Operations Logic -->
     <script>
+        let currentArticlePage = 1;
+        let totalArticlePages = 1;
+
+        function switchTab(tabId, element) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(tabId).classList.add('active');
+            element.classList.add('active');
+
+            if (tabId === 'tabArticles') fetchArticlesTable(1);
+            if (tabId === 'tabUsers') fetchUsersTable();
+            if (tabId === 'tabLogs') fetchActivityLogs();
+            if (tabId === 'tabAISettings') fetchAISettings();
+        }
+
         async function initAdmin() {
             const token = localStorage.getItem('authToken');
             if (!token) {
@@ -263,7 +585,6 @@
                     document.getElementById('statArticles').textContent = data.total_articles;
                     document.getElementById('statScheduler').textContent = data.scheduler_active ? 'Active 24/7' : 'Active (In-Process)';
 
-                    // Render Publisher Badges
                     const pubContainer = document.getElementById('publishersList');
                     pubContainer.innerHTML = '';
                     for (const [source, count] of Object.entries(data.publisher_counts)) {
@@ -286,99 +607,256 @@
             }
         }
 
-        async function loginAdminDirectly() {
-            const email = document.getElementById('adminEmailInput').value.trim();
-            const password = document.getElementById('adminPassInput').value;
-            const alertBox = document.getElementById('adminLoginAlert');
+        /* 1. Article Management Table */
+        async function fetchArticlesTable(page = 1) {
+            const token = localStorage.getItem('authToken');
+            currentArticlePage = page;
+            const search = document.getElementById('adminArticleSearch').value.trim();
+            const source = document.getElementById('adminPublisherFilter').value;
 
-            if (!email || !password) {
-                alertBox.style.display = 'block';
-                alertBox.style.background = 'rgba(239, 68, 68, 0.15)';
-                alertBox.style.border = '1px solid rgba(239, 68, 68, 0.3)';
-                alertBox.style.color = '#fca5a5';
-                alertBox.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Please enter both email and password.';
-                return;
-            }
+            const tbody = document.getElementById('adminArticlesTbody');
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 24px;"><i class="fa-solid fa-spinner fa-spin"></i> Loading stories...</td></tr>';
 
             try {
-                const formData = new FormData();
-                formData.append('username', email);
-                formData.append('password', password);
+                const url = `/api/admin/articles?page=${page}&limit=12&search=${encodeURIComponent(search)}&source=${encodeURIComponent(source)}`;
+                const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+                
+                if (res.ok) {
+                    const data = await res.json();
+                    totalArticlePages = data.total_pages;
+                    document.getElementById('articlePaginationInfo').textContent = `Page ${data.page} of ${data.total_pages} (${data.total} total stories)`;
+                    
+                    document.getElementById('btnPrevArticles').disabled = (data.page <= 1);
+                    document.getElementById('btnNextArticles').disabled = (data.page >= data.total_pages);
 
-                const res = await fetch('/auth/token', {
+                    if (!data.articles || data.articles.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 30px; color: var(--text-muted);">No articles found matching filters.</td></tr>';
+                        return;
+                    }
+
+                    tbody.innerHTML = '';
+                    data.articles.forEach(art => {
+                        const tr = document.createElement('tr');
+                        tr.id = `row-art-${art.id}`;
+                        tr.innerHTML = `
+                            <td>
+                                <a href="${art.link}" target="_blank" style="color: #f1f5f9; font-weight: 600; text-decoration: none;" title="${art.title}">
+                                    ${art.title.substring(0, 65)}${art.title.length > 65 ? '...' : ''}
+                                </a>
+                            </td>
+                            <td><span style="font-weight: 600; font-size: 12px; color: var(--secondary);">${art.source}</span></td>
+                            <td style="font-size: 12px; color: #94a3b8;">${art.published}</td>
+                            <td>
+                                ${art.has_llm_summary ? '<span style="color: #10b981; font-weight: 600; font-size: 12px;"><i class="fa-solid fa-circle-check"></i> Synthesized</span>' : '<span style="color: #f59e0b; font-weight: 600; font-size: 12px;"><i class="fa-solid fa-clock"></i> Raw RSS</span>'}
+                            </td>
+                            <td style="text-align: right; white-space: nowrap;">
+                                <button onclick="resummarizeArticle('${art.id}', this)" class="btn-table-action btn-action-resummarize" title="Re-summarize with AI">
+                                    <i class="fa-solid fa-wand-magic-sparkles"></i> AI Re-summarize
+                                </button>
+                                <button onclick="deleteArticle('${art.id}')" class="btn-table-action btn-action-delete" title="Delete Article">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                }
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #f87171;">Failed to load article records.</td></tr>';
+            }
+        }
+
+        function changeArticlePage(delta) {
+            const newPage = currentArticlePage + delta;
+            if (newPage >= 1 && newPage <= totalArticlePages) {
+                fetchArticlesTable(newPage);
+            }
+        }
+
+        async function resummarizeArticle(articleId, btn) {
+            const token = localStorage.getItem('authToken');
+            const originalHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Synthesizing...';
+
+            try {
+                const res = await fetch(`/api/admin/articles/${articleId}/resummarize`, {
                     method: 'POST',
-                    body: formData
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    btn.innerHTML = '<i class="fa-solid fa-circle-check"></i> Done!';
+                    btn.style.background = 'rgba(16, 185, 129, 0.2)';
+                    btn.style.color = '#a7f3d0';
+                    setTimeout(() => {
+                        btn.disabled = false;
+                        btn.innerHTML = originalHtml;
+                        fetchArticlesTable(currentArticlePage);
+                    }, 1200);
+                } else {
+                    btn.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Error';
+                    setTimeout(() => { btn.disabled = false; btn.innerHTML = originalHtml; }, 2000);
+                }
+            } catch (err) {
+                btn.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Error';
+                setTimeout(() => { btn.disabled = false; btn.innerHTML = originalHtml; }, 2000);
+            }
+        }
+
+        async function deleteArticle(articleId) {
+            if (!confirm('Are you sure you want to permanently delete this article?')) return;
+            const token = localStorage.getItem('authToken');
+
+            try {
+                const res = await fetch(`/api/admin/articles/${articleId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const row = document.getElementById(`row-art-${articleId}`);
+                    if (row) row.remove();
+                }
+            } catch (err) {
+                alert('Connection error deleting article.');
+            }
+        }
+
+        /* 2. User Management Directory */
+        async function fetchUsersTable() {
+            const token = localStorage.getItem('authToken');
+            const tbody = document.getElementById('adminUsersTbody');
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 24px;"><i class="fa-solid fa-spinner fa-spin"></i> Loading users...</td></tr>';
+
+            try {
+                const res = await fetch('/api/admin/users', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const users = await res.json();
+                    tbody.innerHTML = '';
+                    users.forEach(u => {
+                        const tr = document.createElement('tr');
+                        const isPrimaryAdmin = (u.email.toLowerCase() === '18dkkaushik@gmail.com');
+                        tr.innerHTML = `
+                            <td style="font-family: var(--font-mono); color: #94a3b8;">#${u.id}</td>
+                            <td style="font-weight: 600; color: #fff;">${u.full_name}</td>
+                            <td>${u.email}</td>
+                            <td style="font-size: 12px; color: #94a3b8;">${u.created_at}</td>
+                            <td>
+                                ${u.is_admin ? '<span style="background: rgba(245, 158, 11, 0.2); color: #fcd34d; padding: 3px 8px; border-radius: 6px; font-weight: 700; font-size: 11px;"><i class="fa-solid fa-crown"></i> Admin</span>' : '<span style="background: rgba(255, 255, 255, 0.06); color: #cbd5e1; padding: 3px 8px; border-radius: 6px; font-weight: 500; font-size: 11px;">User</span>'}
+                            </td>
+                            <td style="text-align: right;">
+                                ${isPrimaryAdmin ? '<span style="font-size: 11px; color: #64748b; font-weight: 600;">Super Admin</span>' : `
+                                    <button onclick="toggleUserRole(${u.id}, this)" class="btn-table-action ${u.is_admin ? 'btn-action-delete' : 'btn-action-resummarize'}">
+                                        ${u.is_admin ? '<i class="fa-solid fa-user-minus"></i> Demote' : '<i class="fa-solid fa-crown"></i> Promote to Admin'}
+                                    </button>
+                                `}
+                            </td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                }
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #f87171;">Failed to load user accounts.</td></tr>';
+            }
+        }
+
+        async function toggleUserRole(userId, btn) {
+            const token = localStorage.getItem('authToken');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+            try {
+                const res = await fetch(`/api/admin/users/${userId}/role`, {
+                    method: 'PUT',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    fetchUsersTable();
+                }
+            } catch (err) {
+                alert('Error updating user role.');
+            }
+        }
+
+        /* 3. Live Activity Console Logs */
+        async function fetchActivityLogs() {
+            const token = localStorage.getItem('authToken');
+            const terminal = document.getElementById('adminTerminalLogs');
+
+            try {
+                const res = await fetch('/api/admin/logs', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const logs = await res.json();
+                    if (!logs || logs.length === 0) {
+                        terminal.innerHTML = '<div class="log-entry"><span class="log-time">[System Ready]</span> <span>Awaiting background events...</span></div>';
+                        return;
+                    }
+                    terminal.innerHTML = '';
+                    logs.forEach(l => {
+                        const entry = document.createElement('div');
+                        entry.className = 'log-entry';
+                        const levelClass = l.level === 'ERROR' ? 'log-level-error' : 'log-level-info';
+                        entry.innerHTML = `<span class="log-time">[${l.timestamp}]</span> <span class="${levelClass}">[${l.level}]</span> <span>${l.message}</span>`;
+                        terminal.appendChild(entry);
+                    });
+                }
+            } catch (err) {}
+        }
+
+        /* 4. AI Settings */
+        async function fetchAISettings() {
+            const token = localStorage.getItem('authToken');
+            try {
+                const res = await fetch('/api/admin/ai-settings', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const settings = await res.json();
+                    if (settings.model) document.getElementById('aiModelSelect').value = settings.model;
+                    if (settings.temperature !== undefined) {
+                        document.getElementById('aiTempSlider').value = settings.temperature;
+                        document.getElementById('tempValueDisplay').textContent = settings.temperature;
+                    }
+                    if (settings.max_tokens) document.getElementById('aiMaxTokensInput').value = settings.max_tokens;
+                }
+            } catch (err) {}
+        }
+
+        async function saveAISettings() {
+            const token = localStorage.getItem('authToken');
+            const model = document.getElementById('aiModelSelect').value;
+            const temperature = parseFloat(document.getElementById('aiTempSlider').value);
+            const max_tokens = parseInt(document.getElementById('aiMaxTokensInput').value);
+            const alertBox = document.getElementById('aiSettingsAlert');
+
+            try {
+                const res = await fetch('/api/admin/ai-settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ model, temperature, max_tokens })
                 });
 
                 if (res.ok) {
-                    const data = await res.json();
-                    localStorage.setItem('authToken', data.access_token);
                     alertBox.style.display = 'block';
                     alertBox.style.background = 'rgba(16, 185, 129, 0.15)';
                     alertBox.style.border = '1px solid rgba(16, 185, 129, 0.3)';
                     alertBox.style.color = '#a7f3d0';
-                    alertBox.innerHTML = '<i class="fa-solid fa-circle-check"></i> Admin authenticated! Loading dashboard...';
-                    setTimeout(initAdmin, 800);
-                } else {
-                    alertBox.style.display = 'block';
-                    alertBox.style.background = 'rgba(239, 68, 68, 0.15)';
-                    alertBox.style.border = '1px solid rgba(239, 68, 68, 0.3)';
-                    alertBox.style.color = '#fca5a5';
-                    alertBox.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Invalid email or password.';
+                    alertBox.innerHTML = '<i class="fa-solid fa-circle-check"></i> AI Model settings updated successfully!';
+                    setTimeout(() => { alertBox.style.display = 'none'; }, 3000);
                 }
             } catch (err) {
                 alertBox.style.display = 'block';
                 alertBox.style.background = 'rgba(239, 68, 68, 0.15)';
                 alertBox.style.border = '1px solid rgba(239, 68, 68, 0.3)';
                 alertBox.style.color = '#fca5a5';
-                alertBox.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Connection error. Please try again.';
+                alertBox.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Error updating settings.';
             }
         }
 
-        async function handleAdminGoogleLogin(response) {
-            const alertBox = document.getElementById('adminLoginAlert');
-            alertBox.style.display = 'block';
-            alertBox.style.background = 'rgba(102, 126, 234, 0.15)';
-            alertBox.style.border = '1px solid rgba(102, 126, 234, 0.3)';
-            alertBox.style.color = '#a5b4fc';
-            alertBox.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Authenticating Google Admin credentials...';
-
-            try {
-                const res = await fetch('/auth/google', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id_token: response.credential })
-                });
-
-                if (res.ok) {
-                    const data = await res.json();
-                    localStorage.setItem('authToken', data.access_token);
-                    alertBox.style.background = 'rgba(16, 185, 129, 0.15)';
-                    alertBox.style.border = '1px solid rgba(16, 185, 129, 0.3)';
-                    alertBox.style.color = '#a7f3d0';
-                    alertBox.innerHTML = '<i class="fa-solid fa-circle-check"></i> Google Admin verified! Unlocking portal...';
-                    setTimeout(initAdmin, 800);
-                } else {
-                    const err = await res.json();
-                    alertBox.style.background = 'rgba(239, 68, 68, 0.15)';
-                    alertBox.style.border = '1px solid rgba(239, 68, 68, 0.3)';
-                    alertBox.style.color = '#fca5a5';
-                    alertBox.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> ${err.detail || 'Google sign-in failed'}`;
-                }
-            } catch (err) {
-                alertBox.style.background = 'rgba(239, 68, 68, 0.15)';
-                alertBox.style.border = '1px solid rgba(239, 68, 68, 0.3)';
-                alertBox.style.color = '#fca5a5';
-                alertBox.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Google connection failed.';
-            }
-        }
-
-        function logoutAndShowLogin() {
-            localStorage.removeItem('authToken');
-            document.getElementById('accessDenied').style.display = 'none';
-            document.getElementById('adminLoginSection').style.display = 'block';
-        }
-
+        /* 5. Trigger Scrape & Auth Handlers */
         async function triggerScrape() {
             const token = localStorage.getItem('authToken');
             const btn = document.getElementById('scrapeBtn');
@@ -391,7 +869,7 @@
             alertBox.style.background = 'rgba(102, 126, 234, 0.15)';
             alertBox.style.border = '1px solid rgba(102, 126, 234, 0.3)';
             alertBox.style.color = '#a5b4fc';
-            alertBox.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Scraping TechCrunch, The Verge, Wired & Ars Technica... Generating Groq AI summaries...';
+            alertBox.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Ingesting feeds from TechCrunch, The Verge, Wired & Ars Technica...';
 
             try {
                 const res = await fetch('/api/admin/trigger-scrape', {
@@ -417,11 +895,100 @@
                 alertBox.style.background = 'rgba(239, 68, 68, 0.15)';
                 alertBox.style.border = '1px solid rgba(239, 68, 68, 0.3)';
                 alertBox.style.color = '#fca5a5';
-                alertBox.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Connection error while triggering scrape.';
+                alertBox.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Connection error.';
             } finally {
                 btn.disabled = false;
                 icon.className = 'fa-solid fa-rotate-right';
             }
+        }
+
+        async function loginAdminDirectly() {
+            const email = document.getElementById('adminEmailInput').value.trim();
+            const password = document.getElementById('adminPassInput').value;
+            const alertBox = document.getElementById('adminLoginAlert');
+
+            if (!email || !password) {
+                alertBox.style.display = 'block';
+                alertBox.style.background = 'rgba(239, 68, 68, 0.15)';
+                alertBox.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+                alertBox.style.color = '#fca5a5';
+                alertBox.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Enter email and password.';
+                return;
+            }
+
+            try {
+                const formData = new FormData();
+                formData.append('username', email);
+                formData.append('password', password);
+
+                const res = await fetch('/auth/token', { method: 'POST', body: formData });
+                if (res.ok) {
+                    const data = await res.json();
+                    localStorage.setItem('authToken', data.access_token);
+                    alertBox.style.display = 'block';
+                    alertBox.style.background = 'rgba(16, 185, 129, 0.15)';
+                    alertBox.style.border = '1px solid rgba(16, 185, 129, 0.3)';
+                    alertBox.style.color = '#a7f3d0';
+                    alertBox.innerHTML = '<i class="fa-solid fa-circle-check"></i> Admin verified! Loading Command Center...';
+                    setTimeout(initAdmin, 700);
+                } else {
+                    alertBox.style.display = 'block';
+                    alertBox.style.background = 'rgba(239, 68, 68, 0.15)';
+                    alertBox.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+                    alertBox.style.color = '#fca5a5';
+                    alertBox.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Invalid credentials.';
+                }
+            } catch (err) {
+                alertBox.style.display = 'block';
+                alertBox.style.background = 'rgba(239, 68, 68, 0.15)';
+                alertBox.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+                alertBox.style.color = '#fca5a5';
+                alertBox.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Connection error.';
+            }
+        }
+
+        async function handleAdminGoogleLogin(response) {
+            const alertBox = document.getElementById('adminLoginAlert');
+            alertBox.style.display = 'block';
+            alertBox.style.background = 'rgba(102, 126, 234, 0.15)';
+            alertBox.style.border = '1px solid rgba(102, 126, 234, 0.3)';
+            alertBox.style.color = '#a5b4fc';
+            alertBox.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Authenticating Google Admin credentials...';
+
+            try {
+                const res = await fetch('/auth/google', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id_token: response.credential })
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    localStorage.setItem('authToken', data.access_token);
+                    alertBox.style.background = 'rgba(16, 185, 129, 0.15)';
+                    alertBox.style.border = '1px solid rgba(16, 185, 129, 0.3)';
+                    alertBox.style.color = '#a7f3d0';
+                    alertBox.innerHTML = '<i class="fa-solid fa-circle-check"></i> Google Admin verified! Loading...';
+                    setTimeout(initAdmin, 700);
+                } else {
+                    const err = await res.json();
+                    alertBox.style.background = 'rgba(239, 68, 68, 0.15)';
+                    alertBox.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+                    alertBox.style.color = '#fca5a5';
+                    alertBox.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> ${err.detail || 'Google sign-in failed'}`;
+                }
+            } catch (err) {
+                alertBox.style.background = 'rgba(239, 68, 68, 0.15)';
+                alertBox.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+                alertBox.style.color = '#fca5a5';
+                alertBox.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Google connection failed.';
+            }
+        }
+
+        function logoutAndShowLogin() {
+            localStorage.removeItem('authToken');
+            document.getElementById('accessDenied').style.display = 'none';
+            document.getElementById('adminLoginSection').style.display = 'block';
         }
 
         document.addEventListener('DOMContentLoaded', initAdmin);

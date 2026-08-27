@@ -563,6 +563,22 @@ async def chat_endpoint(request: Request):
     answer = get_llm_answer_groq(question, relevant_articles, history=history)
     return JSONResponse({"answer": answer})
 
+# In-memory AI Settings & Scraper Activity Logs Buffer
+from collections import deque
+
+AI_SETTINGS = {
+    "model": "openai/gpt-oss-120b",
+    "temperature": 0.7,
+    "max_tokens": 150
+}
+
+SCRAPER_LOGS = deque(maxlen=100)
+
+def log_admin_event(message: str, level: str = "INFO"):
+    """Append event to in-memory admin activity console"""
+    timestamp = datetime.now(IST_TZ).strftime("%d %b %I:%M:%S %p IST")
+    SCRAPER_LOGS.appendleft({"timestamp": timestamp, "level": level, "message": message})
+
 # Admin Control Panel Endpoints
 @app.get("/admin", response_class=HTMLResponse)
 def admin_page(request: Request):
@@ -575,7 +591,6 @@ async def get_admin_stats(db: Session = Depends(get_db), admin: User = Depends(g
     total_users = db.query(User).count()
     total_articles = db.query(Article).count()
     
-    # Publisher Breakdown
     from sqlalchemy import func
     sources = db.query(Article.source, func.count(Article.id)).group_by(Article.source).all()
     publisher_counts = {source or "TechNews": count for source, count in sources}
@@ -587,21 +602,86 @@ async def get_admin_stats(db: Session = Depends(get_db), admin: User = Depends(g
         "scheduler_active": scheduler.running
     }
 
-@app.post("/api/admin/trigger-scrape")
-async def trigger_manual_scrape(admin: User = Depends(get_current_admin_user)):
-    """Trigger manual multi-source RSS scraping and categorization"""
+@app.get("/api/admin/articles")
+async def get_admin_articles(
+    search: Optional[str] = None,
+    source: Optional[str] = None,
+    page: int = 1,
+    limit: int = 15,
+    db: Session = Depends(get_db),
+    admin: User = Depends(get_current_admin_user)
+):
+    """Get paginated, searchable article list for admin management table"""
+    query = db.query(Article)
+    if source and source != "All":
+        query = query.filter(Article.source == source)
+    if search:
+        search_pattern = f"%{search.strip()}%"
+        query = query.filter(
+            (Article.title.ilike(search_pattern)) | 
+            (Article.summary.ilike(search_pattern)) | 
+            (Article.llm_summary.ilike(search_pattern))
+        )
+    
+    total = query.count()
+    offset = (page - 1) * limit
+    articles = query.order_by(Article.created_at.desc()).offset(offset).limit(limit).all()
+    
+    data = []
+    for a in articles:
+        data.append({
+            "id": a.id,
+            "title": a.title,
+            "source": a.source or "TechNews",
+            "published": format_published_ist(a.published, a.created_at),
+            "link": a.link,
+            "has_llm_summary": bool(a.llm_summary),
+            "summary_preview": (a.llm_summary or a.summary or "")[:120] + "..."
+        })
+        
+    return {
+        "total": total,
+        "page": page,
+        "limit": limit,
+        "total_pages": max(1, (total + limit - 1) // limit),
+        "articles": data
+    }
+
+@app.post("/api/admin/articles/{article_id}/resummarize")
+async def resummarize_article_admin(article_id: str, db: Session = Depends(get_db), admin: User = Depends(get_current_admin_user)):
+    """Re-summarize an article with Groq AI using active AI settings"""
+    article = db.query(Article).filter(Article.id == article_id).first()
+    if not article:
+        raise HTTPException(status_code=404, detail="Article not found")
+        
+    api_key = os.getenv("GROQ_API_KEY") or os.getenv("GROK_API_KEY")
+    if not api_key:
+        raise HTTPException(status_code=500, detail="Groq API key not configured")
+        
+    prompt = f"Summarize the following tech news story in 2 concise, impactful sentences:\n\nTitle: {article.title}\nContent: {article.summary}"
+    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+    payload = {
+        "model": AI_SETTINGS.get("model", "openai/gpt-oss-120b"),
+        "max_tokens": AI_SETTINGS.get("max_tokens", 150),
+        "temperature": AI_SETTINGS.get("temperature", 0.7),
+        "messages": [{"role": "user", "content": prompt}]
+    }
+    
     try:
-        from scrapers.techcrunch import fetch_and_save_all_sources
-        fetch_and_save_all_sources()
-        categorizer.sync_articles_from_files()
-        categorizer.cleanup_old_articles(days=7)
-        return {"status": "success", "message": "Multi-source scrape and categorization completed successfully!"}
+        resp = requests.post("https://api.groq.com/openai/v1/chat/completions", headers=headers, json=payload, timeout=20)
+        resp.raise_for_status()
+        new_summary = resp.json()["choices"][0]["message"]["content"].strip()
+        article.llm_summary = new_summary
+        db.commit()
+        log_admin_event(f"Re-summarized article ID {article_id[:8]} with {AI_SETTINGS.get('model')}")
+        return {"status": "success", "new_summary": new_summary}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Scrape execution failed: {str(e)}")
+        log_admin_event(f"Failed re-summarizing article ID {article_id[:8]}: {str(e)}", level="ERROR")
+        raise HTTPException(status_code=500, detail=f"LLM generation failed: {str(e)}")
 
 @app.delete("/api/admin/articles/{article_id}")
 async def delete_article_admin(article_id: str, db: Session = Depends(get_db), admin: User = Depends(get_current_admin_user)):
-    """Delete an article from database as admin"""
+    """Delete an article and its associations from database"""
     article = db.query(Article).filter(Article.id == article_id).first()
     if not article:
         raise HTTPException(status_code=404, detail="Article not found")
@@ -609,4 +689,80 @@ async def delete_article_admin(article_id: str, db: Session = Depends(get_db), a
     db.query(ArticleCategory).filter(ArticleCategory.article_id == article_id).delete()
     db.delete(article)
     db.commit()
-    return {"status": "success", "message": f"Article {article_id} deleted successfully."}
+    log_admin_event(f"Deleted article '{article.title[:40]}...' (ID: {article_id[:8]})")
+    return {"status": "success", "message": f"Article deleted successfully."}
+
+@app.get("/api/admin/users")
+async def get_admin_users(db: Session = Depends(get_db), admin: User = Depends(get_current_admin_user)):
+    """Get all registered users for user directory management"""
+    users = db.query(User).order_by(User.created_at.desc()).all()
+    return [
+        {
+            "id": u.id,
+            "email": u.email,
+            "full_name": u.full_name or "Anonymous",
+            "is_admin": bool(u.is_admin),
+            "is_active": bool(u.is_active),
+            "created_at": format_published_ist(None, u.created_at)
+        }
+        for u in users
+    ]
+
+@app.put("/api/admin/users/{user_id}/role")
+async def toggle_user_role(user_id: int, db: Session = Depends(get_db), admin: User = Depends(get_current_admin_user)):
+    """Toggle user admin privilege status"""
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    if user.email.lower().strip() == "18dkkaushik@gmail.com":
+        raise HTTPException(status_code=400, detail="Primary Admin account role cannot be modified.")
+        
+    user.is_admin = not user.is_admin
+    db.commit()
+    log_admin_event(f"User '{user.email}' role toggled to {'Admin' if user.is_admin else 'User'}")
+    return {"status": "success", "is_admin": user.is_admin}
+
+@app.get("/api/admin/logs")
+async def get_admin_activity_logs(admin: User = Depends(get_current_admin_user)):
+    """Get live scraper activity and administrative console logs"""
+    return list(SCRAPER_LOGS)
+
+@app.get("/api/admin/ai-settings")
+async def get_admin_ai_settings(admin: User = Depends(get_current_admin_user)):
+    """Get current Groq AI model and generation parameters"""
+    return AI_SETTINGS
+
+@app.post("/api/admin/ai-settings")
+async def update_admin_ai_settings(data: dict, admin: User = Depends(get_current_admin_user)):
+    """Update Groq AI model and generation parameters"""
+    if "model" in data and data["model"]:
+        AI_SETTINGS["model"] = str(data["model"]).strip()
+    if "temperature" in data:
+        try:
+            AI_SETTINGS["temperature"] = max(0.0, min(1.0, float(data["temperature"])))
+        except ValueError:
+            pass
+    if "max_tokens" in data:
+        try:
+            AI_SETTINGS["max_tokens"] = max(50, min(1000, int(data["max_tokens"])))
+        except ValueError:
+            pass
+            
+    log_admin_event(f"AI Settings updated: Model={AI_SETTINGS['model']}, Temp={AI_SETTINGS['temperature']}")
+    return {"status": "success", "settings": AI_SETTINGS}
+
+@app.post("/api/admin/trigger-scrape")
+async def trigger_manual_scrape(admin: User = Depends(get_current_admin_user)):
+    """Trigger manual multi-source RSS scraping and categorization"""
+    log_admin_event("Manual multi-source scrape triggered by Admin")
+    try:
+        from scrapers.techcrunch import fetch_and_save_all_sources
+        fetch_and_save_all_sources()
+        categorizer.sync_articles_from_files()
+        categorizer.cleanup_old_articles(days=7)
+        log_admin_event("Multi-source scrape and categorization completed successfully")
+        return {"status": "success", "message": "Multi-source scrape and categorization completed successfully!"}
+    except Exception as e:
+        log_admin_event(f"Scrape execution failed: {str(e)}", level="ERROR")
+        raise HTTPException(status_code=500, detail=f"Scrape execution failed: {str(e)}")
