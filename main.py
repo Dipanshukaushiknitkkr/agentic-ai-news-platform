@@ -1,18 +1,16 @@
-# main.py
-from config import TECH_SOURCES
+import uvicorn
+import os
+import sys
 
-from config import NOTION_TOKEN, NOTION_DATABASE_ID
-from outputs.notion_writer import NotionWriter
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BACKEND_DIR = os.path.join(BASE_DIR, "backend")
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
+if BACKEND_DIR not in sys.path:
+    sys.path.insert(0, BACKEND_DIR)
 
-
-def main():
-    notion_writer = NotionWriter(NOTION_TOKEN, NOTION_DATABASE_ID)
-    test_title = "Test Article"
-    test_summary = "This is a test summary created by the agent."
-    test_url = "https://example.com/test-article"
-
-    response = notion_writer.create_summary_page(test_title, test_summary, test_url)
-    print("Created Notion page:", response["id"])
+from backend.app.webapp import app
 
 if __name__ == "__main__":
-    main()
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run("backend.app.webapp:app", host="0.0.0.0", port=port, reload=True)

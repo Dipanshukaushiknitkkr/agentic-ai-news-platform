@@ -8,8 +8,12 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app.models import Article, Category, ArticleCategory
-from app.database import get_db, SessionLocal
+try:
+    from backend.app.models import Article, Category, ArticleCategory
+    from backend.app.database import get_db, SessionLocal
+except ImportError:
+    from app.models import Article, Category, ArticleCategory
+    from app.database import get_db, SessionLocal
 
 class ContentCategorizer:
     """Service for automatically categorizing articles based on content"""

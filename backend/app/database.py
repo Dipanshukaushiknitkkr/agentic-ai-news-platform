@@ -1,6 +1,9 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from app.models import Base, Category
+try:
+    from backend.app.models import Base, Category, User
+except ImportError:
+    from app.models import Base, Category, User
 import os
 
 # Database configuration
@@ -54,9 +57,11 @@ def init_database():
     except Exception:
         pass
         
-    # Auto-provision admin privileges for admin email
     try:
-        from app.models import User
+        try:
+            from backend.app.models import User
+        except ImportError:
+            from app.models import User
         db_admin = SessionLocal()
         admin_user = db_admin.query(User).filter(User.email == "18dkkaushik@gmail.com").first()
         if admin_user and not admin_user.is_admin:
