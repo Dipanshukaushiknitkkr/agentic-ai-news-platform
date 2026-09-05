@@ -568,6 +568,20 @@
     <!-- Hero Section -->
     <header class="hero">
         <div class="container">
+            <!-- Dynamic Live Calendar & Status Widget -->
+            <div class="hero-date-calendar">
+                <div class="calendar-chip">
+                    <i class="fa-regular fa-calendar-check calendar-icon"></i>
+                    <span id="currentDayOfWeek" class="calendar-day">Saturday</span>,
+                    <span id="currentDateMonth" class="calendar-date-month">05 September</span>
+                    <span id="currentYear" class="calendar-year">2026</span>
+                </div>
+                <div class="live-edition-chip">
+                    <span class="live-status-dot"></span>
+                    <span>Global Tech Edition</span>
+                </div>
+            </div>
+
             <div class="hero-badge-container">
                 <span class="pulse-dot"></span>
                 <span>Real-Time Multi-Source AI Intelligence</span>
@@ -584,12 +598,12 @@
                 </div>
             </div>
 
-            <!-- Spotlight Visual Showcase Photo -->
+            <!-- Spotlight Real News Visual Showcase Photo -->
             <div class="hero-spotlight">
-                <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&auto=format&fit=crop&q=80" alt="Futuristic AI Intelligence Network">
+                <img src="https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=1400&auto=format&fit=crop&q=85" alt="Global Tech Journalism and Breaking News Network" loading="eager">
                 <div class="hero-spotlight-overlay">
                     <div class="spotlight-info">
-                        <span class="spotlight-tag"><i class="fa-solid fa-bolt"></i> Live Feed Spotlight</span>
+                        <span class="spotlight-tag"><i class="fa-solid fa-newspaper"></i> Global News Intelligence</span>
                         <h2 class="spotlight-title">Synthesizing Real-Time Tech Journalism Across Global Publishers</h2>
                     </div>
                 </div>
@@ -1346,8 +1360,32 @@
             }
         }
 
+        function updateLiveCalendar() {
+            try {
+                const now = new Date();
+                const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+                
+                const dayName = days[now.getDay()];
+                const dateNum = String(now.getDate()).padStart(2, '0');
+                const monthName = months[now.getMonth()];
+                const yearNum = now.getFullYear();
+
+                const dayEl = document.getElementById('currentDayOfWeek');
+                const dateMonthEl = document.getElementById('currentDateMonth');
+                const yearEl = document.getElementById('currentYear');
+
+                if (dayEl) dayEl.textContent = dayName;
+                if (dateMonthEl) dateMonthEl.textContent = `${dateNum} ${monthName}`;
+                if (yearEl) yearEl.textContent = yearNum;
+            } catch (e) {
+                console.error('Calendar widget error:', e);
+            }
+        }
+
         // Initialize on DOM Ready
         document.addEventListener('DOMContentLoaded', () => {
+            updateLiveCalendar();
             initThreeJS();
             init3DCardTilt();
             initInfiniteScrollObserver();
