@@ -79,10 +79,14 @@ import asyncio
 
 def scheduled_news_scrape_job():
     try:
-        print("[SCHEDULER] Running background multi-source scrape & sync...")
-        from scrapers.techcrunch import fetch_and_save_all_sources
+        print("[SCHEDULER] Running background multi-source scrape, deduplication & sync...")
+        try:
+            from backend.scrapers.techcrunch import fetch_and_save_all_sources
+        except ImportError:
+            from scrapers.techcrunch import fetch_and_save_all_sources
         fetch_and_save_all_sources()
         categorizer.sync_articles_from_files()
+        categorizer.deduplicate_existing_database()
         categorizer.cleanup_old_articles(days=7)
     except Exception as e:
         print(f"[SCHEDULER ERROR]: {e}")
@@ -95,6 +99,8 @@ async def run_initial_scrape_async():
 @app.on_event("startup")
 async def startup_event():
     init_database()
+    # Re-tag database with updated 2026 taxonomy keywords
+    categorizer.recategorize_all_existing_articles()
     # Trigger background scrape asynchronously without blocking port binding or HTTP responses
     asyncio.create_task(run_initial_scrape_async())
     # Schedule hourly background news scraping
@@ -834,12 +840,16 @@ async def trigger_manual_scrape(admin: User = Depends(get_current_admin_user)):
     """Trigger manual multi-source RSS scraping and categorization"""
     log_admin_event("Manual multi-source scrape triggered by Admin")
     try:
-        from scrapers.techcrunch import fetch_and_save_all_sources
+        try:
+            from backend.scrapers.techcrunch import fetch_and_save_all_sources
+        except ImportError:
+            from scrapers.techcrunch import fetch_and_save_all_sources
         fetch_and_save_all_sources()
         categorizer.sync_articles_from_files()
+        categorizer.deduplicate_existing_database()
         categorizer.cleanup_old_articles(days=7)
-        log_admin_event("Multi-source scrape and categorization completed successfully")
-        return {"status": "success", "message": "Multi-source scrape and categorization completed successfully!"}
+        log_admin_event("Multi-source scrape, deduplication and categorization completed successfully")
+        return {"status": "success", "message": "Multi-source scrape, deduplication and categorization completed successfully!"}
     except Exception as e:
         log_admin_event(f"Scrape execution failed: {str(e)}", level="ERROR")
         raise HTTPException(status_code=500, detail=f"Scrape execution failed: {str(e)}")

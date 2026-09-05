@@ -104,6 +104,48 @@ def get_llm_summary_groq(title, summary, audience="general tech audience"):
     clean_summary = re.sub(r'<[^>]+>', '', summary).strip()
     return clean_summary[:200] + "..." if len(clean_summary) > 200 else clean_summary
 
+from difflib import SequenceMatcher
+
+STOPWORDS = {
+    'the', 'is', 'at', 'which', 'on', 'a', 'an', 'and', 'or', 'for', 'to', 'of', 'in',
+    'with', 'by', 'as', 'from', 'that', 'this', 'it', 'are', 'be', 'was', 'were', 'has',
+    'had', 'have', 'but', 'not', 'if', 'then', 'so', 'do', 'does', 'did', 'can', 'will',
+    'just', 'about', 'into', 'over', 'after', 'before', 'more', 'less', 'than', 'up',
+    'out', 'off', 'no', 'yes', 'you', 'new', 'says', 'how', 'why', 'what', 'first',
+    'here', 'now', 'its', 'itself', 'all', 'any', 'both', 'each', 'few', 'most', 'other',
+    'some', 'such', 'only', 'own', 'same', 'too', 'very', 'announced', 'announces', 'launches', 'unveils'
+}
+
+def clean_title_tokens(title: str) -> set:
+    """Extract clean content keywords from headline"""
+    words = re.findall(r'\b[a-zA-Z0-9]{3,}\b', title.lower())
+    return set(w for w in words if w not in STOPWORDS)
+
+def is_duplicate_headline(new_title: str, existing_titles: list, jaccard_thresh=0.48, seq_thresh=0.62):
+    """
+    Check if new_title is a duplicate of any title in existing_titles.
+    Uses Token Jaccard Overlap and Levenshtein Sequence Ratio.
+    """
+    new_tokens = clean_title_tokens(new_title)
+    if not new_tokens:
+        return False, None
+        
+    for existing_title in existing_titles:
+        existing_tokens = clean_title_tokens(existing_title)
+        if not existing_tokens:
+            continue
+            
+        intersection = len(new_tokens & existing_tokens)
+        union = len(new_tokens | existing_tokens)
+        jaccard = intersection / union if union > 0 else 0
+        seq_ratio = SequenceMatcher(None, new_title.lower(), existing_title.lower()).ratio()
+        
+        # Match if either strong token overlap or high sequence ratio
+        if (jaccard >= jaccard_thresh and intersection >= 3) or seq_ratio >= seq_thresh:
+            return True, existing_title
+            
+    return False, None
+
 FEEDS = [
     {'name': 'TechCrunch', 'url': 'https://techcrunch.com/feed/'},
     {'name': 'The Verge', 'url': 'https://www.theverge.com/rss/index.xml'},
@@ -117,6 +159,20 @@ def fetch_and_save_all_sources():
     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'}
     
     total_new_articles = 0
+    total_duplicates_skipped = 0
+    
+    # Load recent titles from disk (last 48h) for cross-feed deduplication
+    existing_titles = []
+    if os.path.exists(SAVE_DIR):
+        for fname in sorted(os.listdir(SAVE_DIR), reverse=True)[:150]:
+            if fname.endswith('.json'):
+                try:
+                    with open(os.path.join(SAVE_DIR, fname), 'r', encoding='utf-8') as f:
+                        data = json.load(f)
+                        if data.get('title'):
+                            existing_titles.append(data['title'])
+                except Exception:
+                    pass
     
     for feed_info in FEEDS:
         source_name = feed_info['name']
@@ -150,7 +206,15 @@ def fetch_and_save_all_sources():
                 filename_base = f"{date_str}-{slugify(source_name)}-{slugify(title)[:45]}"
                 json_filepath = os.path.join(SAVE_DIR, f"{filename_base}.json")
                 
+                # Check exact file match
                 if os.path.exists(json_filepath):
+                    continue
+                
+                # Check cross-publisher duplicate headline
+                is_dup, matched_title = is_duplicate_headline(title, existing_titles)
+                if is_dup:
+                    print(f"[{source_name}] 🚫 Skipped redundant cross-publisher story: '{title[:45]}...' (matches: '{matched_title[:45]}...')")
+                    total_duplicates_skipped += 1
                     continue
                     
                 image_url = extract_image_url(entry)
@@ -168,11 +232,12 @@ def fetch_and_save_all_sources():
                         'source': source_name
                     }, jf, ensure_ascii=False, indent=2)
                     
+                existing_titles.append(title)
                 total_new_articles += 1
         except Exception as e:
             print(f"Error scraping {source_name}: {e}")
             
-    print(f"Multi-source scraping complete. Processed {total_new_articles} new entries.")
+    print(f"Multi-source scraping complete. Added {total_new_articles} unique stories (Skipped {total_duplicates_skipped} redundant duplicates).")
 
 def fetch_and_save_techcrunch_articles():
     fetch_and_save_all_sources()

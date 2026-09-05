@@ -398,3 +398,185 @@ body {
 .modal-close:hover {
     color: var(--text-main);
 }
+
+/* ========================================================
+   📱 Mobile & Tablet Responsive Architecture
+   ======================================================== */
+
+@media (max-width: 768px) {
+    /* 1. Navbar Adaptive Layout */
+    .navbar {
+        height: auto;
+        min-height: 64px;
+        padding: 8px 0;
+    }
+
+    .navbar-container {
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 0 16px;
+    }
+
+    .brand {
+        font-size: 18px;
+    }
+
+    .nav-links {
+        order: 3;
+        width: 100%;
+        display: flex;
+        justify-content: flex-start;
+        gap: 8px;
+        overflow-x: auto;
+        white-space: nowrap;
+        padding: 6px 0 2px 0;
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+
+    .nav-links::-webkit-scrollbar {
+        display: none;
+    }
+
+    .nav-link {
+        font-size: 12.5px;
+        padding: 4px 10px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 20px;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .nav-link.active {
+        background: rgba(99, 102, 241, 0.15);
+        border-color: var(--primary);
+        color: #fff;
+    }
+
+    .nav-link::after {
+        display: none;
+    }
+
+    .navbar-actions {
+        gap: 8px;
+    }
+
+    .btn-3d-toggle {
+        font-size: 11px;
+        padding: 5px 9px;
+    }
+
+    .btn-primary {
+        font-size: 12px;
+        padding: 6px 12px;
+    }
+
+    /* 2. Ticker & Hero Adjustments */
+    .ticker-wrap {
+        margin-top: 108px !important;
+        height: 36px;
+    }
+
+    .hero {
+        padding: 28px 0 20px 0;
+    }
+
+    .hero h1 {
+        font-size: 28px;
+        line-height: 1.25;
+        letter-spacing: -0.5px;
+    }
+
+    .hero-badge-container {
+        font-size: 11px;
+        padding: 4px 10px;
+    }
+
+    .search-container {
+        max-width: 100%;
+        margin-top: 20px;
+    }
+
+    .search-bar-wrapper {
+        padding: 4px 8px;
+    }
+
+    .search-shortcut {
+        display: none;
+    }
+
+    /* 3. Category Filter Swiper */
+    .category-filter {
+        display: flex;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        gap: 8px;
+        padding: 6px 4px 14px 4px;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        margin-bottom: 20px;
+    }
+
+    .category-filter::-webkit-scrollbar {
+        display: none;
+    }
+
+    .pill {
+        flex: 0 0 auto;
+        font-size: 12.5px;
+        padding: 7px 14px;
+        white-space: nowrap;
+    }
+
+    /* 4. News Grid 1-Column */
+    .news-grid {
+        grid-template-columns: 1fr !important;
+        gap: 20px;
+    }
+
+    .article-card {
+        padding: 0;
+    }
+
+    .article-image-container {
+        height: 190px;
+    }
+
+    .article-body {
+        padding: 16px;
+    }
+
+    .article-title {
+        font-size: 16px;
+        line-height: 1.4;
+    }
+
+    .summary-box {
+        font-size: 13px;
+    }
+
+    .container {
+        padding: 0 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .brand {
+        font-size: 16px;
+    }
+    
+    .btn-3d-toggle span {
+        display: none;
+    }
+    
+    .btn-3d-toggle {
+        padding: 6px 10px;
+    }
+
+    .hero h1 {
+        font-size: 24px;
+    }
+}

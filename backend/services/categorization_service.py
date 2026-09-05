@@ -36,50 +36,92 @@ class ContentCategorizer:
         keywords = [word for word in words if word not in self.stopwords]
         return keywords
     
-    def calculate_relevance_score(self, article_text: str, category_keywords: List[str]) -> int:
-        """Calculate relevance score (1-10) for an article to a category"""
-        article_text_lower = article_text.lower()
+    def calculate_relevance_score(self, title: str, content: str, category_keywords: List[str]) -> int:
+        """Calculate relevance score (1-10) for an article to a category with title boosting"""
+        title_lower = title.lower()
+        content_lower = content.lower()
         
         matches = 0
+        title_bonus = 0
         
         for keyword in category_keywords:
             keyword_lower = keyword.lower()
-            # Use regex to find whole-word matches to support short keywords (like AI, ML, VC) correctly
             pattern = r'\b' + re.escape(keyword_lower) + r'\b'
-            if re.search(pattern, article_text_lower):
+            
+            # Check title match (2x weight)
+            if re.search(pattern, title_lower):
+                title_bonus += 2
+                matches += 1
+            # Check content/summary match
+            elif re.search(pattern, content_lower):
                 matches += 1
         
-        if matches == 0:
+        if matches == 0 and title_bonus == 0:
             return 0
         
-        # Calculate score: 1 match = 3, 2 matches = 5, 3 matches = 7, 4 matches = 9, 5+ matches = 10
-        normalized_score = min(10, matches * 2 + 1)
-        return normalized_score
+        score = min(10, (matches * 2) + title_bonus + 1)
+        return score
     
     def categorize_article(self, article_data: Dict, db: Session) -> List[Tuple[int, int]]:
-        """
-        Categorize a single article and return list of (category_id, relevance_score) tuples
-        """
+        """Categorize a single article and return list of (category_id, relevance_score) tuples"""
         categories = self.get_categories(db)
-        article_text = f"{article_data.get('title', '')} {article_data.get('summary', '')} {article_data.get('llm_summary', '')}"
+        title = article_data.get('title', '')
+        content = f"{article_data.get('summary', '')} {article_data.get('llm_summary', '')}"
         
         categorizations = []
-        
         for category in categories:
             if not category.keywords:
                 continue
                 
-            relevance_score = self.calculate_relevance_score(article_text, category.keywords)
-            
-            # Only include categories with relevance score >= 3
-            if relevance_score >= 3:
+            relevance_score = self.calculate_relevance_score(title, content, category.keywords)
+            if relevance_score >= 2:
                 categorizations.append((category.id, relevance_score))
         
-        # Sort by relevance score (highest first)
         categorizations.sort(key=lambda x: x[1], reverse=True)
-        
-        # Return top 3 categories maximum
-        return categorizations[:3]
+        return categorizations[:4]
+
+    def recategorize_all_existing_articles(self, db: Session = None) -> int:
+        """Re-scan all database articles and tag them with updated taxonomy keywords"""
+        owns_session = False
+        if db is None:
+            db = SessionLocal()
+            owns_session = True
+            
+        try:
+            self.categories_cache = None  # Reset cache
+            articles = db.query(Article).all()
+            re_tagged = 0
+            
+            for article in articles:
+                # Clear existing category tags
+                db.query(ArticleCategory).filter(ArticleCategory.article_id == article.id).delete()
+                
+                article_data = {
+                    'title': article.title,
+                    'summary': article.summary or '',
+                    'llm_summary': article.llm_summary or ''
+                }
+                categorizations = self.categorize_article(article_data, db)
+                
+                for category_id, relevance_score in categorizations:
+                    db.add(ArticleCategory(
+                        article_id=article.id,
+                        category_id=category_id,
+                        relevance_score=relevance_score
+                    ))
+                if categorizations:
+                    re_tagged += 1
+                    
+            db.commit()
+            print(f"Re-categorization complete: Successfully tagged {re_tagged} of {len(articles)} articles.")
+            return re_tagged
+        except Exception as e:
+            print(f"Error in recategorize_all_existing_articles: {e}")
+            db.rollback()
+            return 0
+        finally:
+            if owns_session:
+                db.close()
     
     def cleanup_old_articles(self, db: Session = None, days: int = 7):
         """Delete articles (and their category links) older than `days` days.
@@ -122,32 +164,73 @@ class ContentCategorizer:
             if owns_session:
                 db.close()
 
+    def is_duplicate_title(self, new_title: str, existing_titles: List[str], jaccard_thresh=0.48, seq_thresh=0.62) -> bool:
+        """Check if new_title is a duplicate of any existing headline"""
+        from difflib import SequenceMatcher
+        stopwords = set(['the', 'is', 'at', 'which', 'on', 'a', 'an', 'and', 'or', 'for', 'to', 'of', 'in', 'with', 'by', 'as', 'from', 'that', 'this', 'it', 'are', 'be', 'was', 'were', 'has', 'had', 'have', 'but', 'not', 'if', 'then', 'so', 'do', 'does', 'did', 'can', 'will', 'just', 'about', 'into', 'over', 'after', 'before', 'more', 'less', 'than', 'up', 'out', 'off', 'no', 'yes', 'you', 'new', 'says', 'how', 'why', 'what', 'announced', 'announces', 'launches', 'unveils'])
+        
+        def get_clean_tokens(t):
+            words = re.findall(r'\b[a-zA-Z0-9]{3,}\b', t.lower())
+            return set(w for w in words if w not in stopwords)
+            
+        new_tokens = get_clean_tokens(new_title)
+        if not new_tokens:
+            return False
+            
+        for existing in existing_titles:
+            ext_tokens = get_clean_tokens(existing)
+            if not ext_tokens:
+                continue
+            intersection = len(new_tokens & ext_tokens)
+            union = len(new_tokens | ext_tokens)
+            jaccard = intersection / union if union > 0 else 0
+            seq_ratio = SequenceMatcher(None, new_title.lower(), existing.lower()).ratio()
+            
+            if (jaccard >= jaccard_thresh and intersection >= 3) or seq_ratio >= seq_thresh:
+                return True
+        return False
+
     def sync_articles_from_files(self, summaries_dir: str = 'data/summaries/'):
-        """Sync articles from JSON files to database and categorize them"""
+        """Sync articles from JSON files to database with cross-publisher deduplication"""
         db = SessionLocal()
         try:
             if not os.path.exists(summaries_dir):
                 print(f"Summaries directory not found: {summaries_dir}")
                 return
             
+            # Fetch recent titles from database for deduplication
+            cutoff_48h = datetime.utcnow() - timedelta(hours=48)
+            existing_articles = db.query(Article.id, Article.title).filter(Article.created_at >= cutoff_48h).all()
+            existing_ids = set(a.id for a in existing_articles)
+            existing_titles = [a.title for a in existing_articles]
+            
             processed_count = 0
             categorized_count = 0
+            duplicates_skipped = 0
             
-            for filename in os.listdir(summaries_dir):
+            for filename in sorted(os.listdir(summaries_dir), reverse=True):
                 if not filename.endswith('.json'):
                     continue
                 
                 filepath = os.path.join(summaries_dir, filename)
                 article_id = filename.replace('.json', '')
                 
-                # Check if article already exists
-                existing_article = db.query(Article).filter(Article.id == article_id).first()
-                if existing_article:
+                # Check exact ID match
+                if article_id in existing_ids:
                     continue
                 
                 try:
                     with open(filepath, 'r', encoding='utf-8') as f:
                         article_data = json.load(f)
+                    
+                    title = article_data.get('title', '')
+                    if not title:
+                        continue
+                        
+                    # Check cross-publisher duplicate headline
+                    if self.is_duplicate_title(title, existing_titles):
+                        duplicates_skipped += 1
+                        continue
                     
                     # Parse publication date or filename date prefix
                     pub_str = article_data.get('published', '')
@@ -168,16 +251,17 @@ class ContentCategorizer:
                     # Create article record
                     article = Article(
                         id=article_id,
-                        title=article_data.get('title', ''),
+                        title=title,
                         link=article_data.get('link', ''),
                         summary=article_data.get('summary', ''),
                         llm_summary=article_data.get('llm_summary', ''),
                         published=article_data.get('published', ''),
                         image_url=article_data.get('image_url', ''),
+                        source=article_data.get('source', 'TechNews'),
                         created_at=created_at_dt
                     )
                     db.add(article)
-                    db.flush()  # Get the article ID
+                    db.flush()
                     
                     # Categorize the article
                     categorizations = self.categorize_article(article_data, db)
@@ -190,6 +274,8 @@ class ContentCategorizer:
                         )
                         db.add(article_category)
                     
+                    existing_titles.append(title)
+                    existing_ids.add(article_id)
                     processed_count += 1
                     if categorizations:
                         categorized_count += 1
@@ -199,13 +285,47 @@ class ContentCategorizer:
                     continue
             
             db.commit()
-            print(f"Processed {processed_count} new articles, categorized {categorized_count}")
+            print(f"Sync complete: Added {processed_count} unique articles (Skipped {duplicates_skipped} duplicate stories).")
             
         except Exception as e:
             print(f"Error syncing articles: {e}")
             db.rollback()
         finally:
             db.close()
+
+    def deduplicate_existing_database(self, db: Session = None) -> int:
+        """Scan and purge duplicate articles currently in the database"""
+        owns_session = False
+        if db is None:
+            db = SessionLocal()
+            owns_session = True
+            
+        try:
+            articles = db.query(Article).order_by(Article.created_at.desc()).all()
+            unique_titles = []
+            duplicates_to_delete = []
+            
+            for art in articles:
+                if self.is_duplicate_title(art.title, unique_titles):
+                    duplicates_to_delete.append(art)
+                else:
+                    unique_titles.append(art.title)
+                    
+            deleted_count = len(duplicates_to_delete)
+            for dup in duplicates_to_delete:
+                db.query(ArticleCategory).filter(ArticleCategory.article_id == dup.id).delete()
+                db.delete(dup)
+                
+            db.commit()
+            print(f"Database deduplication cleanup: Purged {deleted_count} duplicate stories.")
+            return deleted_count
+        except Exception as e:
+            print(f"Error in database deduplication: {e}")
+            db.rollback()
+            return 0
+        finally:
+            if owns_session:
+                db.close()
     
     def get_articles_by_category(self, db: Session, category_id: int, limit: int = 10) -> List[Article]:
         """Get articles for a specific category"""
