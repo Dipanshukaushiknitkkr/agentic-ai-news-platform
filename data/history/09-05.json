@@ -1,0 +1,22 @@
+{
+  "date": "05 September 2026",
+  "day": "Saturday",
+  "date_key": "09-05",
+  "milestones": [
+    {
+      "year": "1977",
+      "title": "NASA Launches Voyager 1 Space Probe",
+      "fact": "Equipped with the iconic Golden Record and cutting-edge 1970s digital computers, Voyager 1 launched to explore interstellar space. Today, it remains the farthest human-made object in the cosmos."
+    },
+    {
+      "year": "2008",
+      "title": "Google Releases Chrome Beta 0.2",
+      "fact": "Google unveiled the first public beta of the Chrome browser, introducing the revolutionary V8 JavaScript engine that transformed web application performance forever."
+    },
+    {
+      "year": "1997",
+      "title": "Google.com Domain Registered",
+      "fact": "Larry Page and Sergey Brin officially registered the domain Google.com, paving the way for modern algorithmic search and digital indexing."
+    }
+  ]
+}

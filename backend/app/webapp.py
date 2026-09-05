@@ -31,7 +31,7 @@ try:
     from backend.app.schemas import *
     from backend.services.digest_service import digest_service
     from backend.services.categorization_service import categorizer
-    from backend.scrapers.techcrunch import fetch_and_save_techcrunch_articles
+    from backend.services.history_service import history_service
 except ImportError:
     from app.database import get_db, init_database
     from app.auth import authenticate_user, create_access_token, get_current_active_user, get_current_admin_user, create_user, get_user_by_email, ACCESS_TOKEN_EXPIRE_MINUTES
@@ -40,6 +40,7 @@ except ImportError:
     from services.digest_service import digest_service
     from services.categorization_service import categorizer
     from scrapers.techcrunch import fetch_and_save_techcrunch_articles
+    from services.history_service import history_service
 
 from fastapi.templating import Jinja2Templates
 
@@ -70,6 +71,11 @@ templates = Jinja2Templates(directory=TEMPLATES_DIR)
 def health_check():
     """Lightweight health check endpoint for keep-alive pingers"""
     return {"status": "ok", "message": "Server active"}
+
+@app.get("/api/tech-history/today")
+def get_today_tech_history():
+    """Return today's historical tech milestones"""
+    return history_service.get_today_history()
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 

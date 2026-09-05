@@ -568,17 +568,57 @@
     <!-- Hero Section -->
     <header class="hero">
         <div class="container">
-            <!-- Dynamic Live Calendar & Status Widget -->
+            <!-- Dynamic Live Calendar & Tech History AI Flashcard -->
             <div class="hero-date-calendar">
-                <div class="calendar-chip">
+                <button id="toggleHistoryBtn" class="calendar-chip" onclick="toggleTechHistoryCard()" title="Click to view This Day in Tech History">
                     <i class="fa-regular fa-calendar-check calendar-icon"></i>
                     <span id="currentDayOfWeek" class="calendar-day">Saturday</span>,
                     <span id="currentDateMonth" class="calendar-date-month">05 September</span>
                     <span id="currentYear" class="calendar-year">2026</span>
+                    <span class="history-badge-btn"><i class="fa-solid fa-lightbulb" style="color: #fbbf24;"></i> Tech Fact</span>
+                </button>
+
+                <!-- Live Digital Clock -->
+                <div class="live-clock-chip">
+                    <i class="fa-regular fa-clock" style="color: var(--secondary);"></i>
+                    <span id="liveDigitalClock" class="live-clock-text">14:49:00</span>
+                    <span class="tz-badge">IST</span>
                 </div>
+
                 <div class="live-edition-chip">
                     <span class="live-status-dot"></span>
                     <span>Global Tech Edition</span>
+                </div>
+            </div>
+
+            <!-- 💡 Expandable "This Day in Tech History" AI Flashcard -->
+            <div id="techHistoryContainer" class="tech-history-card">
+                <div class="history-header">
+                    <div class="history-tag">
+                        <i class="fa-solid fa-wand-magic-sparkles" style="color: #c084fc;"></i>
+                        <span>THIS DAY IN TECH HISTORY</span>
+                        <span id="historyYear" class="history-year-pill">1977</span>
+                    </div>
+                    <div class="history-actions">
+                        <button onclick="nextTechHistoryMilestone(event)" class="btn-history-next" title="Load Next Milestone">
+                            <i class="fa-solid fa-rotate"></i> <span>Next Milestone</span>
+                        </button>
+                        <button onclick="toggleTechHistoryCard(event)" class="btn-history-close" title="Close">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="history-body">
+                    <h3 id="historyTitle" class="history-title">NASA Launches Voyager 1 Space Probe</h3>
+                    <p id="historyFact" class="history-fact">
+                        "Equipped with the iconic Golden Record and cutting-edge 1970s digital computers, Voyager 1 launched to explore interstellar space and became the farthest human-made object in history."
+                    </p>
+                </div>
+
+                <div class="history-footer">
+                    <span class="history-source"><i class="fa-solid fa-microchip" style="color: var(--secondary);"></i> Autonomous History Curator</span>
+                    <a href="/chat" class="history-chat-link"><i class="fa-solid fa-brain"></i> Ask AI Assistant ➔</a>
                 </div>
             </div>
 
@@ -1360,7 +1400,10 @@
             }
         }
 
-        function updateLiveCalendar() {
+        let techHistoryMilestones = [];
+        let currentMilestoneIndex = 0;
+
+        function updateLiveCalendarAndClock() {
             try {
                 const now = new Date();
                 const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -1378,14 +1421,66 @@
                 if (dayEl) dayEl.textContent = dayName;
                 if (dateMonthEl) dateMonthEl.textContent = `${dateNum} ${monthName}`;
                 if (yearEl) yearEl.textContent = yearNum;
+
+                // Live Ticking Clock (IST / Local)
+                const hours = String(now.getHours()).padStart(2, '0');
+                const mins = String(now.getMinutes()).padStart(2, '0');
+                const secs = String(now.getSeconds()).padStart(2, '0');
+                const clockEl = document.getElementById('liveDigitalClock');
+                if (clockEl) clockEl.textContent = `${hours}:${mins}:${secs}`;
             } catch (e) {
                 console.error('Calendar widget error:', e);
             }
         }
 
+        async function loadTechHistory() {
+            try {
+                const res = await fetch('/api/tech-history/today');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data && data.milestones && data.milestones.length > 0) {
+                        techHistoryMilestones = data.milestones;
+                        currentMilestoneIndex = 0;
+                        renderCurrentMilestone();
+                    }
+                }
+            } catch (e) {
+                console.error('Error fetching tech history:', e);
+            }
+        }
+
+        function renderCurrentMilestone() {
+            if (!techHistoryMilestones || techHistoryMilestones.length === 0) return;
+            const item = techHistoryMilestones[currentMilestoneIndex];
+            const yearEl = document.getElementById('historyYear');
+            const titleEl = document.getElementById('historyTitle');
+            const factEl = document.getElementById('historyFact');
+
+            if (yearEl) yearEl.textContent = item.year || '';
+            if (titleEl) titleEl.textContent = item.title || '';
+            if (factEl) factEl.textContent = `"${item.fact || ''}"`;
+        }
+
+        function nextTechHistoryMilestone(e) {
+            if (e) { e.preventDefault(); e.stopPropagation(); }
+            if (!techHistoryMilestones || techHistoryMilestones.length <= 1) return;
+            currentMilestoneIndex = (currentMilestoneIndex + 1) % techHistoryMilestones.length;
+            renderCurrentMilestone();
+        }
+
+        function toggleTechHistoryCard(e) {
+            if (e) { e.preventDefault(); e.stopPropagation(); }
+            const card = document.getElementById('techHistoryContainer');
+            if (card) {
+                card.classList.toggle('active');
+            }
+        }
+
         // Initialize on DOM Ready
         document.addEventListener('DOMContentLoaded', () => {
-            updateLiveCalendar();
+            updateLiveCalendarAndClock();
+            setInterval(updateLiveCalendarAndClock, 1000);
+            loadTechHistory();
             initThreeJS();
             init3DCardTilt();
             initInfiniteScrollObserver();
