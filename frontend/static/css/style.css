@@ -257,236 +257,197 @@ body {
     transform: translateY(-2px);
 }
 
-/* Live Calendar & Date Badge System */
-.hero-date-calendar {
+/* =========================================================
+   HERO INFO BAR (Option A: Center-Aligned, Compact & Cohesive)
+   ========================================================= */
+.hero-info-bar {
     display: inline-flex;
     align-items: center;
-    gap: 12px;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
     justify-content: center;
+    gap: 12px;
+    margin: 0 auto 16px auto;
     position: relative;
     z-index: 15;
+    flex-wrap: wrap;
 }
 
-.calendar-chip {
+/* 1. MERGED DATE + TIME BOX (Left Side - Compact) */
+.hero-datetime-box {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    background: rgba(15, 23, 42, 0.75);
-    border: 1px solid rgba(168, 85, 247, 0.35);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), inset 0 0 12px rgba(168, 85, 247, 0.1);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    padding: 8px 18px;
-    border-radius: 999px;
+    background: #131a2c;
+    border: 1px solid #2a3350;
+    border-radius: 10px;
+    padding: 8px 14px;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
+    transition: border-color 0.25s ease, transform 0.25s ease;
+}
+
+.hero-datetime-box:hover {
+    border-color: #3b486e;
+    transform: translateY(-1px);
+}
+
+.datetime-date-group,
+.datetime-time-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    white-space: nowrap;
+}
+
+.datetime-icon {
+    color: #5b8def;
     font-size: 13.5px;
-    font-weight: 600;
-    color: #f1f5f9;
-    letter-spacing: 0.2px;
-    cursor: pointer;
-    appearance: none;
-    -webkit-appearance: none;
-    outline: none;
-    font-family: inherit;
-    transition: all 0.3s cubic-bezier(0.15, 0.83, 0.66, 1);
-}
-
-.calendar-chip:hover {
-    transform: translateY(-2px);
-    border-color: rgba(168, 85, 247, 0.65);
-    box-shadow: 0 8px 25px rgba(168, 85, 247, 0.25);
-    background: rgba(24, 18, 54, 0.85);
-}
-
-.calendar-icon {
-    color: #38bdf8;
-    font-size: 14px;
-}
-
-.calendar-day {
-    color: #f8fafc;
-    font-weight: 700;
-}
-
-.calendar-date-month {
-    color: #38bdf8;
-    font-weight: 600;
-}
-
-.calendar-year {
-    color: #c084fc;
-    font-weight: 700;
-    background: rgba(168, 85, 247, 0.18);
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-size: 12px;
-}
-
-/* 💡 Dedicated Attractive Tech Fact Toggle Button */
-.tech-fact-toggle-btn {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    background: linear-gradient(135deg, rgba(30, 20, 58, 0.9) 0%, rgba(20, 15, 45, 0.95) 100%);
-    border: 1px solid rgba(245, 158, 11, 0.45);
-    border-radius: 999px;
-    padding: 6px 15px 6px 10px;
-    cursor: pointer;
-    outline: none;
-    overflow: hidden;
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35), 0 0 15px rgba(245, 158, 11, 0.2);
-    transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-    font-family: inherit;
-    color: #fff;
-    text-decoration: none;
-}
-
-.tech-fact-toggle-btn::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(251, 191, 36, 0.2), transparent);
-    transition: 0.6s ease;
-}
-
-.tech-fact-toggle-btn:hover::before {
-    left: 100%;
-}
-
-.tech-fact-toggle-btn:hover {
-    transform: translateY(-2px) scale(1.02);
-    border-color: rgba(251, 191, 36, 0.85);
-    box-shadow: 0 8px 30px rgba(245, 158, 11, 0.35), 0 0 25px rgba(168, 85, 247, 0.3);
-    background: linear-gradient(135deg, rgba(45, 27, 85, 0.95) 0%, rgba(26, 18, 56, 0.98) 100%);
-}
-
-.tech-fact-toggle-btn.active {
-    border-color: #fbbf24;
-    background: linear-gradient(135deg, rgba(55, 30, 95, 0.98) 0%, rgba(35, 20, 70, 0.98) 100%);
-    box-shadow: 0 0 25px rgba(251, 191, 36, 0.45), 0 0 40px rgba(168, 85, 247, 0.35);
-}
-
-.tech-fact-icon-wrapper {
-    width: 28px;
-    height: 28px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, #f59e0b 0%, #ec4899 100%);
-    border-radius: 50%;
-    color: #ffffff;
-    font-size: 13px;
-    box-shadow: 0 0 12px rgba(245, 158, 11, 0.5);
-    transition: transform 0.4s ease;
     flex-shrink: 0;
 }
 
-.tech-fact-toggle-btn:hover .tech-fact-icon-wrapper {
-    transform: rotate(180deg) scale(1.1);
+.datetime-date-text {
+    color: #e6e9f2;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.1px;
 }
 
-.tech-fact-label-group {
+.datetime-divider {
+    width: 1px;
+    height: 14px;
+    background: #2a3350;
+    margin: 0 8px;
+    flex-shrink: 0;
+}
+
+.datetime-time-text {
+    color: #5b8def;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: var(--font-mono, 'JetBrains Mono', monospace);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.datetime-tz-text {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    opacity: 0.95;
+}
+
+/* 2. TECH FACT CARD (Right Side - Compact) */
+.hero-tech-fact-card {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: #131a2c;
+    border: 1px solid #2a3350;
+    border-radius: 10px;
+    padding: 6px 12px 6px 8px;
+    cursor: pointer;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    user-select: none;
+    outline: none;
+    text-decoration: none;
+    color: inherit;
+}
+
+.hero-tech-fact-card:hover {
+    border-color: rgba(245, 167, 66, 0.6);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(245, 158, 66, 0.15), 0 2px 8px rgba(0, 0, 0, 0.3);
+    background: #172036;
+}
+
+.hero-tech-fact-card.active {
+    border-color: #f5a742;
+    background: #1a233a;
+    box-shadow: 0 0 18px rgba(245, 167, 66, 0.25);
+}
+
+.tech-fact-icon-badge {
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+    background: linear-gradient(135deg, #f59e42 0%, #e8536b 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-size: 11.5px;
+    box-shadow: 0 2px 6px rgba(245, 158, 66, 0.35);
+    flex-shrink: 0;
+    transition: transform 0.3s ease;
+}
+
+.hero-tech-fact-card:hover .tech-fact-icon-badge {
+    transform: scale(1.08) rotate(6deg);
+}
+
+.tech-fact-text-stack {
     display: flex;
     flex-direction: column;
     text-align: left;
     line-height: 1.15;
 }
 
-.tech-fact-mini-title {
-    font-size: 9.5px;
-    font-weight: 800;
-    color: #fbbf24;
-    letter-spacing: 0.8px;
+.tech-fact-eyebrow {
+    font-size: 9px;
+    font-weight: 700;
+    color: #f5a742;
+    letter-spacing: 0.4px;
     text-transform: uppercase;
 }
 
-.tech-fact-main-text {
+.tech-fact-title {
     font-size: 12.5px;
+    font-weight: 500;
+    color: #e6e9f2;
+    white-space: nowrap;
+}
+
+.tech-fact-explore-btn {
+    background: #f5a742;
+    border: none;
+    border-radius: 999px;
+    padding: 4px 10px;
+    min-height: 28px;
+    min-width: 58px;
+    font-size: 10.5px;
     font-weight: 700;
-    color: #f8fafc;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.spark-icon {
-    font-size: 10px;
-    color: #c084fc;
-    animation: sparkPulse 2s infinite ease-in-out;
-}
-
-.tech-fact-toggle-pill {
+    color: #131a2c;
+    cursor: pointer;
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    background: rgba(251, 191, 36, 0.15);
-    border: 1px solid rgba(251, 191, 36, 0.4);
-    padding: 3px 8px;
-    border-radius: 999px;
-    font-size: 10px;
-    font-weight: 800;
-    color: #fbbf24;
-    letter-spacing: 0.5px;
+    justify-content: center;
+    transition: all 0.2s ease;
+    outline: none;
+    box-shadow: 0 2px 6px rgba(245, 167, 66, 0.3);
+    flex-shrink: 0;
     margin-left: 2px;
-    transition: all 0.3s ease;
+    font-family: inherit;
 }
 
-.toggle-indicator-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: #fbbf24;
-    box-shadow: 0 0 6px #fbbf24;
-    animation: blinkDot 1.5s infinite ease-in-out;
+.hero-tech-fact-card:hover .tech-fact-explore-btn {
+    background: #ffb854;
+    transform: scale(1.03);
+    box-shadow: 0 3px 10px rgba(245, 167, 66, 0.5);
 }
 
-.tech-fact-toggle-btn.active .tech-fact-toggle-pill {
-    background: rgba(168, 85, 247, 0.25);
-    border-color: rgba(168, 85, 247, 0.6);
-    color: #e9d5ff;
+.hero-tech-fact-card.active .tech-fact-explore-btn {
+    background: #e8536b;
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(232, 83, 107, 0.4);
 }
 
-.tech-fact-toggle-btn.active .toggle-indicator-dot {
-    background: #a855f7;
-    box-shadow: 0 0 8px #a855f7;
-}
-
-.live-clock-chip {
+/* Secondary Row for Badges */
+.hero-meta-badges {
     display: inline-flex;
     align-items: center;
-    gap: 7px;
-    background: rgba(15, 23, 42, 0.75);
-    border: 1px solid rgba(56, 189, 248, 0.3);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    padding: 7px 15px;
-    border-radius: 999px;
-    font-size: 12.5px;
-    font-family: var(--font-mono, 'JetBrains Mono', monospace);
-    color: #e2e8f0;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-}
-
-.live-clock-text {
-    font-weight: 700;
-    color: #38bdf8;
-    letter-spacing: 0.5px;
-}
-
-.tz-badge {
-    font-size: 10px;
-    font-weight: 700;
-    color: #0284c7;
-    background: rgba(56, 189, 248, 0.2);
-    padding: 1px 6px;
-    border-radius: 8px;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
 }
 
 .live-edition-chip {
@@ -979,33 +940,48 @@ body {
         font-size: 24px;
     }
 
-    .hero-date-calendar {
-        gap: 6px;
+    .hero-info-bar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
         margin-bottom: 12px;
     }
-    
-    .calendar-chip {
-        font-size: 11.5px;
-        padding: 5px 12px;
+
+    .hero-datetime-box {
+        justify-content: center;
+        flex-wrap: wrap;
+        padding: 8px 12px;
+        gap: 6px 8px;
     }
 
-    .tech-fact-toggle-btn {
-        padding: 5px 12px 5px 8px;
-        gap: 7px;
+    .datetime-date-text,
+    .datetime-time-text {
+        font-size: 12.5px;
     }
 
-    .tech-fact-icon-wrapper {
-        width: 24px;
-        height: 24px;
-        font-size: 11px;
+    .datetime-divider {
+        display: none;
     }
 
-    .tech-fact-mini-title {
-        font-size: 8.5px;
+    .hero-tech-fact-card {
+        padding: 6px 10px;
+        gap: 8px;
+        width: 100%;
+        justify-content: space-between;
     }
 
-    .tech-fact-main-text {
-        font-size: 11.5px;
+    .tech-fact-eyebrow {
+        font-size: 9px;
+    }
+
+    .tech-fact-title {
+        font-size: 12px;
+    }
+
+    .tech-fact-explore-btn {
+        min-height: 30px;
+        padding: 4px 10px;
+        font-size: 10.5px;
     }
     
     .live-edition-chip {
