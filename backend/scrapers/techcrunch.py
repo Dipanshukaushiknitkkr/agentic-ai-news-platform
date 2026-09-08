@@ -200,39 +200,57 @@ def fetch_and_save_all_sources():
     
     total_new_articles = 0
     total_duplicates_skipped = 0
-    
-    # Load recent titles from disk (last 48h) for cross-feed deduplication
+
+    # Also load existing titles from DB for deduplication on production
     existing_titles = []
+    try:
+        try:
+            from backend.app.database import SessionLocal as _SL
+            from backend.app.models import Article as _Art
+        except ImportError:
+            from app.database import SessionLocal as _SL
+            from app.models import Article as _Art
+        _db = _SL()
+        try:
+            from datetime import timedelta
+            _cutoff = datetime.utcnow() - timedelta(hours=72)
+            existing_titles = [r[0] for r in _db.query(_Art.title).filter(_Art.created_at >= _cutoff).all() if r[0]]
+        finally:
+            _db.close()
+    except Exception:
+        pass
+
+    # Also load recent titles from disk (local dev fallback)
     if os.path.exists(SAVE_DIR):
         for fname in sorted(os.listdir(SAVE_DIR), reverse=True)[:150]:
             if fname.endswith('.json'):
                 try:
                     with open(os.path.join(SAVE_DIR, fname), 'r', encoding='utf-8') as f:
                         data = json.load(f)
-                        if data.get('title'):
+                        if data.get('title') and data['title'] not in existing_titles:
                             existing_titles.append(data['title'])
                 except Exception:
                     pass
-    
+
     for feed_info in FEEDS:
         source_name = feed_info['name']
         feed_url = feed_info['url']
-        
+
         try:
             response = requests.get(feed_url, headers=headers, timeout=10)
             if response.status_code != 200:
                 print(f"[{source_name}] Failed to fetch feed: {response.status_code}")
                 continue
-                
+
             feed = feedparser.parse(response.content)
             print(f"Fetched {len(feed.entries)} entries from {source_name} RSS feed.")
-            
+
             for entry in feed.entries[:8]:  # Process top 8 entries per source
                 title = entry.title
                 link = entry.link
                 summary = entry.summary if hasattr(entry, 'summary') else ''
                 published = entry.published if hasattr(entry, 'published') else (entry.updated if hasattr(entry, 'updated') else '')
-                
+
                 date_str = ''
                 if hasattr(entry, 'published_parsed') and entry.published_parsed:
                     try:
@@ -245,39 +263,99 @@ def fetch_and_save_all_sources():
 
                 filename_base = f"{date_str}-{slugify(source_name)}-{slugify(title)[:45]}"
                 json_filepath = os.path.join(SAVE_DIR, f"{filename_base}.json")
-                
-                # Check exact file match
+
+                # Check exact file match (local dev)
                 if os.path.exists(json_filepath):
                     continue
-                
+
                 # Check cross-publisher duplicate headline
                 is_dup, matched_title = is_duplicate_headline(title, existing_titles)
                 if is_dup:
-                    print(f"[{source_name}] 🚫 Skipped redundant cross-publisher story: '{title[:45]}...' (matches: '{matched_title[:45]}...')")
+                    print(f"[{source_name}] Skipped redundant story: '{title[:45]}...'")
                     total_duplicates_skipped += 1
                     continue
-                    
+
                 image_url = extract_image_url(entry)
                 llm_summary = get_llm_summary_groq(title, summary)
                 time.sleep(0.5)
-                
-                with open(json_filepath, 'w', encoding='utf-8') as jf:
-                    json.dump({
-                        'title': title,
-                        'link': link,
-                        'summary': summary,
-                        'published': published,
-                        'image_url': image_url,
-                        'llm_summary': llm_summary,
-                        'source': source_name
-                    }, jf, ensure_ascii=False, indent=2)
-                    
+
+                article_data = {
+                    'title': title,
+                    'link': link,
+                    'summary': summary,
+                    'published': published,
+                    'image_url': image_url,
+                    'llm_summary': llm_summary,
+                    'source': source_name
+                }
+
+                # Save JSON file (local dev backup)
+                try:
+                    with open(json_filepath, 'w', encoding='utf-8') as jf:
+                        json.dump(article_data, jf, ensure_ascii=False, indent=2)
+                except Exception as fe:
+                    print(f"[{source_name}] File save warning: {fe}")
+
+                # Write DIRECTLY to DB — works on Render (ephemeral FS) and locally
+                _save_article_to_db(filename_base, article_data, published)
+
                 existing_titles.append(title)
                 total_new_articles += 1
         except Exception as e:
             print(f"Error scraping {source_name}: {e}")
-            
+
     print(f"Multi-source scraping complete. Added {total_new_articles} unique stories (Skipped {total_duplicates_skipped} redundant duplicates).")
+
+
+def _save_article_to_db(article_id, article_data, published_str):
+    """Insert a single scraped article directly into DB. Safe to call multiple times (skips duplicates)."""
+    try:
+        try:
+            from backend.app.database import SessionLocal
+            from backend.app.models import Article
+        except ImportError:
+            from app.database import SessionLocal
+            from app.models import Article
+
+        db = SessionLocal()
+        try:
+            # Skip if already exists
+            if db.query(Article.id).filter(Article.id == article_id).first():
+                return
+
+            # Parse publication date
+            created_at_dt = datetime.now()
+            if published_str:
+                try:
+                    from email.utils import parsedate_to_datetime
+                    created_at_dt = parsedate_to_datetime(published_str).replace(tzinfo=None)
+                except Exception:
+                    pass
+
+            article = Article(
+                id=article_id,
+                title=article_data.get('title', ''),
+                link=article_data.get('link', ''),
+                summary=article_data.get('summary', ''),
+                llm_summary=article_data.get('llm_summary', ''),
+                published=published_str,
+                image_url=article_data.get('image_url', ''),
+                source=article_data.get('source', 'TechNews'),
+                created_at=created_at_dt
+            )
+            db.add(article)
+            db.commit()
+            print(f"[DB] Saved: {article_data.get('title', '')[:60]}")
+        except Exception as e:
+            db.rollback()
+            # Unique constraint = already exists, not a real error
+            if 'unique' not in str(e).lower() and 'duplicate' not in str(e).lower():
+                print(f"[DB] Insert warning: {e}")
+        finally:
+            db.close()
+    except Exception as e:
+        print(f"[DB] Could not connect: {e}")
+
 
 def fetch_and_save_techcrunch_articles():
     fetch_and_save_all_sources()
