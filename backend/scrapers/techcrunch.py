@@ -1,5 +1,6 @@
 import feedparser
 import os
+import sys
 from datetime import datetime
 import re
 import requests
@@ -8,6 +9,13 @@ import time
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 load_dotenv()
+
+# Fix Windows terminal encoding so emoji in print() don't crash the process
+if sys.stdout.encoding and sys.stdout.encoding.lower() not in ('utf-8', 'utf8'):
+    try:
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    except Exception:
+        pass
 
 def slugify(text):
     text = text.lower()
@@ -56,12 +64,14 @@ def extract_image_url(entry):
 
 # Permanent model fallback chain — if a model is deprecated/unavailable,
 # the system automatically tries the next one. No manual intervention needed.
+# Order = confirmed-working first, suspected-down last.
+# To change primary: set GROQ_MODEL=model-name in your .env file.
 GROQ_MODEL_FALLBACK_CHAIN = [
-    os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile"),  # Primary: from env or default
-    "llama-3.1-70b-versatile",   # Fallback 1
-    "llama-3.1-8b-instant",      # Fallback 2 (faster, lighter)
-    "gemma2-9b-it",              # Fallback 3 (Google Gemma on Groq)
-    "mixtral-8x7b-32768",        # Fallback 4 (Mistral)
+    os.getenv("GROQ_MODEL", "llama-3.1-70b-versatile"),  # Primary: confirmed working Sep 2026
+    "gemma2-9b-it",              # Fallback 1: Google Gemma on Groq (stable)
+    "mixtral-8x7b-32768",        # Fallback 2: Mistral (stable)
+    "llama-3.3-70b-versatile",   # Fallback 3: may come back online
+    "llama-3.1-8b-instant",      # Fallback 4: may come back online
 ]
 # Remove duplicates while preserving order
 _seen = set()
