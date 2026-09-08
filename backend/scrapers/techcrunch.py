@@ -25,7 +25,12 @@ def extract_image_url(entry):
         url = entry.media_thumbnail[0].get('url')
         if url:
             return url
-    # 3. Try to extract from summary or content
+    # 3. Try enclosures
+    if 'enclosures' in entry and entry.enclosures:
+        for enc in entry.enclosures:
+            if enc.get('type', '').startswith('image/') and enc.get('href'):
+                return enc['href']
+    # 4. Try to extract from summary or content
     html_sources = []
     if hasattr(entry, 'summary'):
         html_sources.append(entry.summary)
@@ -35,24 +40,74 @@ def extract_image_url(entry):
         match = re.search(r'<img[^>]+src="([^"]+)"', html)
         if match:
             return match.group(1)
-    # 4. Scrape the article page for og:image or first <img>
+    # 5. Fast scrape article page for og:image (2s max timeout)
     try:
         article_url = entry.link
-        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'}
-        resp = requests.get(article_url, headers=headers, timeout=5)
+        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
+        resp = requests.get(article_url, headers=headers, timeout=2)
         if resp.status_code == 200:
             soup = BeautifulSoup(resp.content, 'html.parser')
-            # Try og:image
             og_image = soup.find('meta', property='og:image')
             if og_image and og_image.get('content'):
                 return og_image['content']
-            # Fallback: first <img>
-            first_img = soup.find('img')
-            if first_img and first_img.get('src'):
-                return first_img['src']
-    except Exception as e:
-        print(f"Error scraping image from {entry.link}: {e}")
+    except Exception:
+        pass
     return ''
+
+# Permanent model fallback chain — if a model is deprecated/unavailable,
+# the system automatically tries the next one. No manual intervention needed.
+GROQ_MODEL_FALLBACK_CHAIN = [
+    os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile"),  # Primary: from env or default
+    "llama-3.1-70b-versatile",   # Fallback 1
+    "llama-3.1-8b-instant",      # Fallback 2 (faster, lighter)
+    "gemma2-9b-it",              # Fallback 3 (Google Gemma on Groq)
+    "mixtral-8x7b-32768",        # Fallback 4 (Mistral)
+]
+# Remove duplicates while preserving order
+_seen = set()
+GROQ_MODEL_FALLBACK_CHAIN = [
+    m for m in GROQ_MODEL_FALLBACK_CHAIN
+    if m not in _seen and not _seen.add(m)
+]
+
+def _call_groq(api_key, payload, timeout=8):
+    """Try each model in the fallback chain. Returns (text, model_used) or raises."""
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
+    last_error = None
+    for model in GROQ_MODEL_FALLBACK_CHAIN:
+        payload["model"] = model
+        for attempt in range(2):
+            try:
+                response = requests.post(
+                    "https://api.groq.com/openai/v1/chat/completions",
+                    headers=headers,
+                    json=payload,
+                    timeout=timeout
+                )
+                if response.status_code == 429:
+                    time.sleep(1)
+                    continue
+                # 404 or 400 with "model not found" = deprecated — try next model
+                if response.status_code in (400, 404):
+                    err_body = response.text.lower()
+                    if "model" in err_body and ("not found" in err_body or "deprecated" in err_body or "does not exist" in err_body):
+                        print(f"[GROQ] Model '{model}' unavailable/deprecated — trying next fallback.")
+                        last_error = f"Model {model} deprecated"
+                        break  # break inner retry loop → try next model
+                response.raise_for_status()
+                result = response.json()
+                text = result["choices"][0]["message"]["content"].strip()
+                if model != GROQ_MODEL_FALLBACK_CHAIN[0]:
+                    print(f"[GROQ] Using fallback model: {model}")
+                return text, model
+            except Exception as e:
+                last_error = str(e)
+                if attempt == 0:
+                    time.sleep(0.5)
+    raise RuntimeError(f"All Groq models exhausted. Last error: {last_error}")
 
 def get_llm_summary_groq(title, summary, audience="general tech audience"):
     api_key = os.getenv("GROQ_API_KEY")
@@ -65,44 +120,19 @@ def get_llm_summary_groq(title, summary, audience="general tech audience"):
         f"Article summary: {summary}\n\n"
         f"Summarize the above for a {audience} in 2-3 sentences."
     )
-    headers = {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json"
-    }
     payload = {
-        "model": "openai/gpt-oss-120b",
+        "model": "",  # will be filled by _call_groq
         "max_tokens": 120,
         "temperature": 0.7,
-        "messages": [
-            {"role": "user", "content": prompt}
-        ]
+        "messages": [{"role": "user", "content": prompt}]
     }
-    
-    # Try up to 2 times with backoff on rate limits (429)
-    for attempt in range(2):
-        try:
-            response = requests.post(
-                "https://api.groq.com/openai/v1/chat/completions",
-                headers=headers,
-                json=payload,
-                timeout=15
-            )
-            if response.status_code == 429:
-                print("[GROQ RATE LIMIT] 429 received. Backing off for 2s...")
-                time.sleep(2)
-                continue
-            response.raise_for_status()
-            result = response.json()
-            return result["choices"][0]["message"]["content"].strip()
-        except Exception as e:
-            if attempt == 0:
-                time.sleep(1)
-            else:
-                print(f"Groq API fallback for '{title[:30]}...': {e}")
-                
-    # Fallback to cleaning HTML from summary snippet if LLM rate limited
-    clean_summary = re.sub(r'<[^>]+>', '', summary).strip()
-    return clean_summary[:200] + "..." if len(clean_summary) > 200 else clean_summary
+    try:
+        text, _ = _call_groq(api_key, payload, timeout=8)
+        return text
+    except Exception:
+        # Final fallback: strip HTML from raw summary
+        clean_summary = re.sub(r'<[^>]+>', '', summary).strip()
+        return clean_summary[:200] + "..." if len(clean_summary) > 200 else clean_summary
 
 from difflib import SequenceMatcher
 

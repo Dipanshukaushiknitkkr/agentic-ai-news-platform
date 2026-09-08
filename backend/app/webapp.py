@@ -148,11 +148,6 @@ def get_llm_answer_groq(question, articles, history=None):
             "4. Provide a clear, well-formatted response using bullet points and clean paragraph line breaks. Avoid single-line compressed tables."
         )
         
-        headers = {
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json"
-        }
-        
         messages = [{"role": "system", "content": system_instruction}]
         
         # Append conversation history turns
@@ -167,25 +162,19 @@ def get_llm_answer_groq(question, articles, history=None):
         messages.append({"role": "user", "content": question})
         
         payload = {
-            "model": "openai/gpt-oss-120b",
+            "model": "",  # will be filled by _call_groq fallback chain
             "max_tokens": 400,
             "temperature": 0.7,
             "messages": messages
         }
         try:
-            response = requests.post(
-                "https://api.groq.com/openai/v1/chat/completions",
-                headers=headers,
-                json=payload,
-                timeout=30
-            )
-            response.raise_for_status()
-            result = response.json()
-            return result["choices"][0]["message"]["content"].strip()
+            from backend.scrapers.techcrunch import _call_groq
+            text, model_used = _call_groq(api_key, payload, timeout=30)
+            return text
         except Exception as e:
-            print(f"Groq API connection error: {e}")
+            print(f"Groq API error (all models exhausted): {e}")
             use_fallback = True
-            fallback_reason = "Outbound connection to Groq blocked, offline, or key invalid"
+            fallback_reason = "All Groq models unavailable or key invalid"
             
     if use_fallback:
         # Fallback offline semantic search logic
@@ -656,7 +645,7 @@ async def chat_endpoint(request: Request):
 from collections import deque
 
 AI_SETTINGS = {
-    "model": "openai/gpt-oss-120b",
+    "model": "llama-3.3-70b-versatile",
     "temperature": 0.7,
     "max_tokens": 150
 }
