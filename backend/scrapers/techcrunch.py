@@ -62,62 +62,10 @@ def extract_image_url(entry):
         pass
     return ''
 
-# Permanent model fallback chain — if a model is deprecated/unavailable,
-# the system automatically tries the next one. No manual intervention needed.
-# Order = confirmed-working first, suspected-down last.
-# To change primary: set GROQ_MODEL=model-name in your .env file.
-GROQ_MODEL_FALLBACK_CHAIN = [
-    os.getenv("GROQ_MODEL", "llama-3.1-70b-versatile"),  # Primary: confirmed working Sep 2026
-    "gemma2-9b-it",              # Fallback 1: Google Gemma on Groq (stable)
-    "mixtral-8x7b-32768",        # Fallback 2: Mistral (stable)
-    "llama-3.3-70b-versatile",   # Fallback 3: may come back online
-    "llama-3.1-8b-instant",      # Fallback 4: may come back online
-]
-# Remove duplicates while preserving order
-_seen = set()
-GROQ_MODEL_FALLBACK_CHAIN = [
-    m for m in GROQ_MODEL_FALLBACK_CHAIN
-    if m not in _seen and not _seen.add(m)
-]
-
-def _call_groq(api_key, payload, timeout=8):
-    """Try each model in the fallback chain. Returns (text, model_used) or raises."""
-    headers = {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json"
-    }
-    last_error = None
-    for model in GROQ_MODEL_FALLBACK_CHAIN:
-        payload["model"] = model
-        for attempt in range(2):
-            try:
-                response = requests.post(
-                    "https://api.groq.com/openai/v1/chat/completions",
-                    headers=headers,
-                    json=payload,
-                    timeout=timeout
-                )
-                if response.status_code == 429:
-                    time.sleep(1)
-                    continue
-                # 404 or 400 with "model not found" = deprecated — try next model
-                if response.status_code in (400, 404):
-                    err_body = response.text.lower()
-                    if "model" in err_body and ("not found" in err_body or "deprecated" in err_body or "does not exist" in err_body):
-                        print(f"[GROQ] Model '{model}' unavailable/deprecated — trying next fallback.")
-                        last_error = f"Model {model} deprecated"
-                        break  # break inner retry loop → try next model
-                response.raise_for_status()
-                result = response.json()
-                text = result["choices"][0]["message"]["content"].strip()
-                if model != GROQ_MODEL_FALLBACK_CHAIN[0]:
-                    print(f"[GROQ] Using fallback model: {model}")
-                return text, model
-            except Exception as e:
-                last_error = str(e)
-                if attempt == 0:
-                    time.sleep(0.5)
-    raise RuntimeError(f"All Groq models exhausted. Last error: {last_error}")
+try:
+    from backend.app.groq_client import call_groq
+except ImportError:
+    from app.groq_client import call_groq
 
 def get_llm_summary_groq(title, summary, audience="general tech audience"):
     api_key = os.getenv("GROQ_API_KEY")
@@ -131,16 +79,16 @@ def get_llm_summary_groq(title, summary, audience="general tech audience"):
         f"Summarize the above for a {audience} in 2-3 sentences."
     )
     payload = {
-        "model": "",  # will be filled by _call_groq
         "max_tokens": 120,
         "temperature": 0.7,
         "messages": [{"role": "user", "content": prompt}]
     }
     try:
-        text, _ = _call_groq(api_key, payload, timeout=8)
+        text, model_used = call_groq(api_key, payload, timeout=12)
         return text
-    except Exception:
+    except Exception as e:
         # Final fallback: strip HTML from raw summary
+        print(f"[GROQ SUMMARY FALLBACK] {e}")
         clean_summary = re.sub(r'<[^>]+>', '', summary).strip()
         return clean_summary[:200] + "..." if len(clean_summary) > 200 else clean_summary
 
@@ -308,14 +256,16 @@ def fetch_and_save_all_sources():
 
 
 def _save_article_to_db(article_id, article_data, published_str):
-    """Insert a single scraped article directly into DB. Safe to call multiple times (skips duplicates)."""
+    """Insert a single scraped article directly into DB with automatic categorization tags."""
     try:
         try:
             from backend.app.database import SessionLocal
-            from backend.app.models import Article
+            from backend.app.models import Article, ArticleCategory
+            from backend.services.categorization_service import categorizer
         except ImportError:
             from app.database import SessionLocal
-            from app.models import Article
+            from app.models import Article, ArticleCategory
+            from services.categorization_service import categorizer
 
         db = SessionLocal()
         try:
@@ -344,8 +294,19 @@ def _save_article_to_db(article_id, article_data, published_str):
                 created_at=created_at_dt
             )
             db.add(article)
+            db.flush()
+
+            # Automatically categorize the new article
+            categorizations = categorizer.categorize_article(article_data, db)
+            for category_id, relevance_score in categorizations:
+                db.add(ArticleCategory(
+                    article_id=article_id,
+                    category_id=category_id,
+                    relevance_score=relevance_score
+                ))
+
             db.commit()
-            print(f"[DB] Saved: {article_data.get('title', '')[:60]}")
+            print(f"[DB] Saved & Categorized ({len(categorizations)} tags): {article_data.get('title', '')[:60]}")
         except Exception as e:
             db.rollback()
             # Unique constraint = already exists, not a real error

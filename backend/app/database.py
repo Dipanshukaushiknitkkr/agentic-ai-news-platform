@@ -78,22 +78,22 @@ def init_database():
             {
                 "name": "Artificial Intelligence",
                 "description": "AI, machine learning, and automation news",
-                "keywords": ["AI", "artificial intelligence", "machine learning", "ML", "neural network", "deep learning", "GPT", "LLM", "automation", "robot", "algorithm", "OpenAI", "ChatGPT", "Claude", "Anthropic", "Gemini", "DeepMind", "Nvidia", "Copilot", "reasoning", "model", "agent", "agentic", "Mistral", "Perplexity", "DeepSeek", "Midjourney", "GenAI", "generative AI", "diffusion", "inference", "prompt", "parameters", "transformer"]
+                "keywords": ["AI", "artificial intelligence", "machine learning", "ML", "neural network", "deep learning", "GPT", "LLM", "automation", "robot", "algorithm", "OpenAI", "ChatGPT", "Claude", "Anthropic", "Gemini", "DeepMind", "Nvidia", "Copilot", "reasoning", "model", "agent", "agentic", "Mistral", "Perplexity", "DeepSeek", "Midjourney", "GenAI", "generative AI", "diffusion", "inference", "prompt", "parameters", "transformer", "synthetic"]
             },
             {
                 "name": "Startups & Funding",
                 "description": "Startup news, funding rounds, and venture capital",
-                "keywords": ["startup", "startups", "funding", "fund", "funds", "venture capital", "VC", "investment", "investments", "investor", "investors", "seed", "Series A", "Series B", "Series C", "IPO", "acquisition", "acquires", "acquired", "merger", "valuation", "raise", "raises", "raised", "raising", "Y Combinator", "accelerator", "unicorn", "angel", "backed", "capital", "shares", "finances", "founder", "founders", "pre-seed", "stealth", "round"]
+                "keywords": ["startup", "startups", "funding", "fund", "funds", "venture capital", "VC", "investment", "investments", "investor", "investors", "seed", "Series A", "Series B", "Series C", "IPO", "acquisition", "acquires", "acquired", "merger", "valuation", "raise", "raises", "raised", "raising", "Y Combinator", "accelerator", "unicorn", "angel", "backed", "capital", "shares", "finances", "founder", "founders", "pre-seed", "stealth", "round", "billion", "million", "deal"]
             },
             {
                 "name": "Big Tech",
                 "description": "News from major technology companies",
-                "keywords": ["Google", "Apple", "Microsoft", "Amazon", "Meta", "Facebook", "Tesla", "Netflix", "Uber", "Twitter", "X", "Alphabet", "Qualcomm", "Intel", "TSMC", "AMD", "YouTube", "AWS", "Azure", "Samsung", "Sony", "Oracle", "IBM", "ByteDance", "OpenAI", "Nvidia"]
+                "keywords": ["Google", "Apple", "Microsoft", "Amazon", "Meta", "Facebook", "Tesla", "Netflix", "Uber", "Twitter", "X", "Alphabet", "Qualcomm", "Intel", "TSMC", "AMD", "YouTube", "AWS", "Azure", "Samsung", "Sony", "Oracle", "IBM", "ByteDance", "OpenAI", "Nvidia", "SpaceX"]
             },
             {
                 "name": "Cybersecurity",
                 "description": "Security breaches, privacy, and cybersecurity news",
-                "keywords": ["security", "breach", "hack", "hacker", "hackers", "cybersecurity", "privacy", "data protection", "vulnerability", "vulnerabilities", "malware", "ransomware", "encryption", "spyware", "phishing", "exploit", "exploits", "zero-day", "leaked", "leak", "passwords", "CVE", "FBI", "CISA", "security flaw", "patch", "infosec", "threat actor", "trojan", "botnet", "ransom"]
+                "keywords": ["security", "breach", "hack", "hacker", "hackers", "cybersecurity", "privacy", "data protection", "vulnerability", "vulnerabilities", "malware", "ransomware", "encryption", "spyware", "phishing", "exploit", "exploits", "zero-day", "leaked", "leak", "passwords", "CVE", "FBI", "CISA", "security flaw", "patch", "infosec", "threat actor", "trojan", "botnet", "ransom", "surveillance"]
             },
             {
                 "name": "Mobile & Apps",
@@ -103,17 +103,32 @@ def init_database():
             {
                 "name": "Enterprise & SaaS",
                 "description": "Enterprise software and SaaS solutions",
-                "keywords": ["enterprise", "SaaS", "software", "cloud", "business", "productivity", "CRM", "ERP", "workflow", "collaboration", "database", "Snowflake", "Databricks", "Salesforce", "Kubernetes", "DevOps", "infrastructure", "B2B", "platform", "platforms", "API", "APIs", "microservices", "mainframe", "workplace", "analytics", "tools"]
+                "keywords": ["enterprise", "SaaS", "software", "cloud", "business", "productivity", "CRM", "ERP", "workflow", "collaboration", "database", "Snowflake", "Databricks", "Salesforce", "Kubernetes", "DevOps", "infrastructure", "B2B", "platform", "platforms", "API", "APIs", "microservices", "mainframe", "workplace", "analytics", "tools", "windows", "linux", "open-source"]
             },
             {
                 "name": "Electric Vehicles",
                 "description": "Electric vehicles, autonomous driving, and transportation",
-                "keywords": ["electric vehicle", "EV", "EVs", "autonomous", "self-driving", "Tesla", "transportation", "battery", "charging", "mobility", "Rivian", "Lucid", "BYD", "autopilot", "FSD", "Waymo", "Cruise", "supercharger", "NACS", "range", "gigafactory", "electric car", "robotaxi"]
+                "keywords": ["electric vehicle", "EV", "EVs", "autonomous", "self-driving", "Tesla", "transportation", "battery", "charging", "mobility", "Rivian", "Lucid", "BYD", "autopilot", "FSD", "Waymo", "Cruise", "supercharger", "NACS", "range", "gigafactory", "electric car", "robotaxi", "cybercab"]
             },
             {
                 "name": "Fintech",
                 "description": "Financial technology and digital payments",
                 "keywords": ["fintech", "cryptocurrency", "bitcoin", "blockchain", "payment", "digital wallet", "banking", "financial", "crypto", "DeFi", "Stripe", "PayPal", "Revolut", "stablecoin", "SEC", "Ethereum", "wallet", "trading", "finance", "card", "debit", "credit", "ledger"]
+            },
+            {
+                "name": "Science & Space",
+                "description": "Space exploration, physics, biology, and scientific discoveries",
+                "keywords": ["NASA", "SpaceX", "space", "satellite", "satellites", "telescope", "rocket", "astronomy", "physics", "quantum", "planet", "Mars", "Moon", "orbit", "spacecraft", "scientific", "science", "research", "climate", "solar", "energy", "biology", "synapses", "hibernation", "seismic", "Voyager", "BepiColombo", "CERN", "nuclear", "fusion"]
+            },
+            {
+                "name": "Hardware & Gadgets",
+                "description": "Computer hardware, chips, semiconductors, audio, and gear",
+                "keywords": ["hardware", "chip", "chips", "semiconductor", "semiconductors", "processor", "processors", "CPU", "GPU", "ASML", "TSMC", "Intel", "AMD", "Qualcomm", "RAM", "memory", "laptop", "laptops", "desktop", "PC", "monitor", "display", "screen", "headphones", "headset", "audio", "speakers", "backpack", "watch", "Casio", "gear", "accessories", "e-reader", "Boox", "drone"]
+            },
+            {
+                "name": "Gaming",
+                "description": "Video games, consoles, game engines, and esports",
+                "keywords": ["game", "games", "gaming", "gamer", "gamers", "PlayStation", "PS5", "Xbox", "Nintendo", "Switch", "Steam", "console", "gameplay", "esports", "Tetris", "Pokemon", "Pokmon", "GTA", "Roblox", "Unreal", "Unity", "Razer", "controller"]
             }
         ]
         

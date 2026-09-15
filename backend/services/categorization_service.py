@@ -48,9 +48,9 @@ class ContentCategorizer:
             keyword_lower = keyword.lower()
             pattern = r'\b' + re.escape(keyword_lower) + r'\b'
             
-            # Check title match (2x weight)
+            # Check title match (3x weight bonus)
             if re.search(pattern, title_lower):
-                title_bonus += 2
+                title_bonus += 3
                 matches += 1
             # Check content/summary match
             elif re.search(pattern, content_lower):
@@ -76,6 +76,42 @@ class ContentCategorizer:
             relevance_score = self.calculate_relevance_score(title, content, category.keywords)
             if relevance_score >= 2:
                 categorizations.append((category.id, relevance_score))
+        
+        # If no strong match, accept lower-confidence match (relevance >= 1)
+        if not categorizations:
+            for category in categories:
+                if not category.keywords:
+                    continue
+                score = self.calculate_relevance_score(title, content, category.keywords)
+                if score >= 1:
+                    categorizations.append((category.id, score))
+
+        # Smart fallback: If still empty, assign to the most appropriate general category
+        if not categorizations:
+            cat_map = {c.name: c.id for c in categories}
+            full_text = f"{title} {content}".lower()
+            
+            if any(w in full_text for w in ["space", "nasa", "satellite", "starlink", "planet", "telescope", "science", "physics", "solar", "nature", "biology", "dna"]):
+                if "Science & Space" in cat_map:
+                    categorizations.append((cat_map["Science & Space"], 5))
+            elif any(w in full_text for w in ["game", "gaming", "playstation", "xbox", "nintendo", "steam", "player", "console"]):
+                if "Gaming" in cat_map:
+                    categorizations.append((cat_map["Gaming"], 5))
+            elif any(w in full_text for w in ["laptop", "pc", "headphone", "audio", "gear", "hardware", "screen", "monitor", "watch", "camera"]):
+                if "Hardware & Gadgets" in cat_map:
+                    categorizations.append((cat_map["Hardware & Gadgets"], 5))
+            elif any(w in full_text for w in ["startup", "raise", "seed", "fund", "valuation", "invest"]):
+                if "Startups & Funding" in cat_map:
+                    categorizations.append((cat_map["Startups & Funding"], 5))
+            elif any(w in full_text for w in ["ai", "model", "intelligence", "gpt", "robot", "agent"]):
+                if "Artificial Intelligence" in cat_map:
+                    categorizations.append((cat_map["Artificial Intelligence"], 5))
+            else:
+                # Default to Big Tech / General Tech
+                if "Big Tech" in cat_map:
+                    categorizations.append((cat_map["Big Tech"], 3))
+                elif categories:
+                    categorizations.append((categories[0].id, 3))
         
         categorizations.sort(key=lambda x: x[1], reverse=True)
         return categorizations[:4]
@@ -197,12 +233,12 @@ class ContentCategorizer:
             if not os.path.exists(summaries_dir):
                 print(f"Summaries directory not found: {summaries_dir}")
                 return
+            # Fetch all existing IDs to avoid unique constraint collisions
+            existing_ids = set(a[0] for a in db.query(Article.id).all())
             
-            # Fetch recent titles from database for deduplication
+            # Fetch recent titles from database for cross-publisher deduplication
             cutoff_48h = datetime.utcnow() - timedelta(hours=48)
-            existing_articles = db.query(Article.id, Article.title).filter(Article.created_at >= cutoff_48h).all()
-            existing_ids = set(a.id for a in existing_articles)
-            existing_titles = [a.title for a in existing_articles]
+            existing_titles = [a[0] for a in db.query(Article.title).filter(Article.created_at >= cutoff_48h).all() if a[0]]
             
             processed_count = 0
             categorized_count = 0

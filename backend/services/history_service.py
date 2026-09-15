@@ -173,27 +173,27 @@ class HistoryService:
             "Keep each fact to 2 concise, fascinating sentences."
         )
 
-        headers = {
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json"
-        }
         payload = {
-            "model": "openai/gpt-oss-120b",
             "max_tokens": 350,
             "temperature": 0.5,
             "messages": [{"role": "user", "content": prompt}]
         }
 
         try:
-            resp = requests.post("https://api.groq.com/openai/v1/chat/completions", headers=headers, json=payload, timeout=8)
-            if resp.status_code == 200:
-                raw = resp.json()["choices"][0]["message"]["content"].strip()
+            try:
+                from backend.app.groq_client import call_groq
+            except ImportError:
+                from app.groq_client import call_groq
+
+            raw, model_used = call_groq(api_key, payload, timeout=12)
+            if raw:
                 # Clean markdown json code blocks if present
-                if raw.startswith("```"):
-                    raw = raw.split("```")[1]
-                    if raw.startswith("json"):
-                        raw = raw[4:]
-                data = json.loads(raw.strip())
+                clean_raw = raw.strip()
+                if clean_raw.startswith("```"):
+                    clean_raw = clean_raw.split("```")[1]
+                    if clean_raw.startswith("json"):
+                        clean_raw = clean_raw[4:]
+                data = json.loads(clean_raw.strip())
                 if isinstance(data, list) and len(data) > 0:
                     return data
         except Exception as e:

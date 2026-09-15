@@ -29,6 +29,7 @@ try:
     from backend.app.auth import authenticate_user, create_access_token, get_current_active_user, get_current_admin_user, create_user, get_user_by_email, ACCESS_TOKEN_EXPIRE_MINUTES
     from backend.app.models import User, Category, Article, ArticleCategory, UserSubscription, DigestLog
     from backend.app.schemas import *
+    from backend.app.groq_client import call_groq, get_live_groq_models
     from backend.services.digest_service import digest_service
     from backend.services.categorization_service import categorizer
     from backend.services.history_service import history_service
@@ -37,6 +38,7 @@ except ImportError:
     from app.auth import authenticate_user, create_access_token, get_current_active_user, get_current_admin_user, create_user, get_user_by_email, ACCESS_TOKEN_EXPIRE_MINUTES
     from app.models import User, Category, Article, ArticleCategory, UserSubscription, DigestLog
     from app.schemas import *
+    from app.groq_client import call_groq, get_live_groq_models
     from services.digest_service import digest_service
     from services.categorization_service import categorizer
     from scrapers.techcrunch import fetch_and_save_techcrunch_articles
@@ -129,7 +131,7 @@ def get_llm_answer_groq(question, articles, history=None):
     
     if not api_key:
         use_fallback = True
-        fallback_reason = "Groq API key not set in your .env file"
+        fallback_reason = "Groq API key not configured"
         
     if not use_fallback:
         # Compose context from top 5 articles (title + llm_summary)
@@ -138,14 +140,14 @@ def get_llm_answer_groq(question, articles, history=None):
         ])
         
         system_instruction = (
-            "You are an expert AI Tech Assistant, company advisor, and news expert.\n"
-            "Here is the recent tech news context retrieved from our database:\n"
+            "You are TechCore AI, an elite AI technology expert and news analyst.\n"
+            "Here is recent relevant tech news from our live database:\n"
             f"{context}\n\n"
             "Instructions:\n"
-            "1. Use the retrieved tech news above as primary evidence for real-time news questions.\n"
-            "2. Answer follow-up questions, general knowledge cross-questions, and background details about companies, founders, history, or technology seamlessly using your general knowledge.\n"
-            "3. Maintain full conversation context with the user across follow-up questions.\n"
-            "4. Provide a clear, well-formatted response using bullet points and clean paragraph line breaks. Avoid single-line compressed tables."
+            "1. Answer the user's inquiry accurately, thoroughly, and engagingly.\n"
+            "2. Seamlessly blend the provided news facts with your broad technology background knowledge.\n"
+            "3. Format your response cleanly using bullet points, bold highlights, and readable paragraphs.\n"
+            "4. Maintain full context across previous conversation turns."
         )
         
         messages = [{"role": "system", "content": system_instruction}]
@@ -161,27 +163,30 @@ def get_llm_answer_groq(question, articles, history=None):
         # Append current user question
         messages.append({"role": "user", "content": question})
         
+        preferred_model = AI_SETTINGS.get("model", "openai/gpt-oss-120b")
+        temp = float(AI_SETTINGS.get("temperature", 0.7))
+        max_tokens = int(AI_SETTINGS.get("max_tokens", 400))
+        
         payload = {
-            "model": "",  # will be filled by _call_groq fallback chain
-            "max_tokens": 400,
-            "temperature": 0.7,
+            "max_tokens": max_tokens,
+            "temperature": temp,
             "messages": messages
         }
         try:
-            from backend.scrapers.techcrunch import _call_groq
-            text, model_used = _call_groq(api_key, payload, timeout=30)
-            return text
+            text, model_used = call_groq(api_key, payload, timeout=30, preferred_model=preferred_model)
+            if text:
+                return text
         except Exception as e:
-            print(f"Groq API error (all models exhausted): {e}")
+            print(f"[GROQ CHAT ERROR] All live models failed: {e}")
             use_fallback = True
-            fallback_reason = "All Groq models unavailable or key invalid"
+            fallback_reason = "AI generation temporarily unavailable"
             
     if use_fallback:
         # Fallback offline semantic search logic
         if not articles:
-            return f"[{fallback_reason}]\n\nI couldn't find any articles in my database to help answer your question."
+            return f"[{fallback_reason}]\n\nI couldn't find matching articles in the database to answer your question right now."
         
-        response_text = f"🤖 [OFFLINE FALLBACK MODE: {fallback_reason}]\n\nBased on your question, here are the most relevant articles found in my database:\n"
+        response_text = f"🤖 [OFFLINE FALLBACK MODE: {fallback_reason}]\n\nBased on your question, here are the most relevant articles from our database:\n"
         for idx, a in enumerate(articles[:3], 1):
             sum_text = a.get('llm_summary') or a.get('summary', '')[:150] + '...'
             response_text += f"\n👉 {idx}. {a['title']}\n   {sum_text}\n"
@@ -645,7 +650,7 @@ async def chat_endpoint(request: Request):
 from collections import deque
 
 AI_SETTINGS = {
-    "model": "llama-3.3-70b-versatile",
+    "model": "openai/gpt-oss-120b",
     "temperature": 0.7,
     "max_tokens": 150
 }
