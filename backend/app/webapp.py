@@ -134,20 +134,35 @@ def get_llm_answer_groq(question, articles, history=None):
         fallback_reason = "Groq API key not configured"
         
     if not use_fallback:
-        # Compose context from top 5 articles (title + llm_summary)
-        context = "\n\n".join([
-            f"Title: {a['title']}\nAI Summary: {a.get('llm_summary','')}" for a in articles[:5]
-        ])
+        # Current local IST date
+        now_ist = datetime.now(IST_TZ)
+        current_date_str = now_ist.strftime("%d %B %Y")
+        
+        # Compose rich structured context from relevant articles
+        context_blocks = []
+        for idx, a in enumerate(articles[:6], 1):
+            source_name = a.get('source', 'TechNews') or 'TechNews'
+            pub_date = a.get('published') or 'Recent'
+            context_blocks.append(
+                f"[{idx}] Source: {source_name} | Date: {pub_date}\n"
+                f"Headline: {a['title']}\n"
+                f"Summary & Facts: {a.get('llm_summary') or a.get('summary', '')}"
+            )
+        context_text = "\n\n".join(context_blocks) if context_blocks else "No matching recent database articles found."
         
         system_instruction = (
-            "You are TechCore AI, an elite AI technology expert and news analyst.\n"
-            "Here is recent relevant tech news from our live database:\n"
-            f"{context}\n\n"
-            "Instructions:\n"
-            "1. Answer the user's inquiry accurately, thoroughly, and engagingly.\n"
-            "2. Seamlessly blend the provided news facts with your broad technology background knowledge.\n"
-            "3. Format your response cleanly using bullet points, bold highlights, and readable paragraphs.\n"
-            "4. Maintain full context across previous conversation turns."
+            f"You are TechCore AI, an elite technology journalist, executive analyst, and intelligence assistant.\n"
+            f"Current Date: {current_date_str}.\n\n"
+            "VERIFIED TECH NEWS FROM OUR LIVE DATABASE:\n"
+            f"{context_text}\n\n"
+            "CRITICAL RESPONSE GUIDELINES:\n"
+            "1. DIRECT EXECUTIVE OUTPUT: Deliver your final response immediately. Never output internal thoughts, meta-commentary, scratchpad planning, or phrases like 'User is asking'.\n"
+            "2. ACCURACY & EVIDENCE: Use the retrieved news context as primary evidence. Distinguish clearly between what happened in the last 7 days vs older background.\n"
+            "3. STRUCTURED JOURNALISM FORMAT:\n"
+            "   - 📌 Executive Overview (1-2 sharp summary sentences)\n"
+            "   - 🔍 Major Developments (Bullet points with bold titles, dates, source attribution, and core facts)\n"
+            "   - 💡 Industry Analysis & Strategic Implications (Why this matters for the broader ecosystem)\n"
+            "4. PROFESSIONAL TONE: Sharp, engaging, authoritative, formatted cleanly with markdown bolding and bullet points."
         )
         
         messages = [{"role": "system", "content": system_instruction}]
@@ -164,8 +179,8 @@ def get_llm_answer_groq(question, articles, history=None):
         messages.append({"role": "user", "content": question})
         
         preferred_model = AI_SETTINGS.get("model", "openai/gpt-oss-120b")
-        temp = float(AI_SETTINGS.get("temperature", 0.7))
-        max_tokens = int(AI_SETTINGS.get("max_tokens", 400))
+        temp = float(AI_SETTINGS.get("temperature", 0.35))
+        max_tokens = int(AI_SETTINGS.get("max_tokens", 900))
         
         payload = {
             "max_tokens": max_tokens,
@@ -192,25 +207,59 @@ def get_llm_answer_groq(question, articles, history=None):
             response_text += f"\n👉 {idx}. {a['title']}\n   {sum_text}\n"
         return response_text
 
-def get_keywords(text):
-    # Simple keyword extraction: split on non-word chars, lowercase, remove stopwords
-    stopwords = set(['the','is','at','which','on','a','an','and','or','for','to','of','in','with','by','as','from','that','this','it','are','be','was','were','has','had','have','but','not','if','then','so','do','does','did','can','will','just','about','into','over','after','before','more','less','than','up','out','off','no','yes','you','i','we','they','he','she','his','her','their','our','my','your'])
-    words = re.findall(r'\w+', text.lower())
-    return [w for w in words if w not in stopwords and len(w) > 2]
+META_STOPWORDS = set([
+    'the','is','at','which','on','a','an','and','or','for','to','of','in','with','by',
+    'as','from','that','this','it','are','be','was','were','has','had','have','but',
+    'not','if','then','so','do','does','did','can','will','just','about','into','over',
+    'after','before','more','less','than','up','out','off','no','yes','you','i','we',
+    'they','he','she','his','her','their','our','my','your','news','latest','recent',
+    'days','last','tell','give','show','articles','article','what','whats','how','when',
+    'where','why','who','update','updates','happened','today','week','month','year','past'
+])
 
-def select_relevant_articles(question, articles, top_n=5):
+def get_keywords(text):
+    """Extract clean content keywords while removing conversational stop words"""
+    words = re.findall(r'\b[a-zA-Z0-9]{3,}\b', text.lower())
+    return [w for w in words if w not in META_STOPWORDS]
+
+def select_relevant_articles(question, articles, top_n=6):
+    """Select most relevant articles with temporal awareness, entity targeting, and title weighting"""
+    question_lower = question.lower()
     q_keywords = set(get_keywords(question))
+    
+    # Check if temporal filter is requested
+    is_temporal = any(k in question_lower for k in ["7 days", "last week", "past week", "recent", "latest", "today"])
+    now_ist = datetime.now(IST_TZ)
+    cutoff_7d = now_ist - timedelta(days=7)
+
     scored = []
     for a in articles:
-        text = f"{a.get('title','')} {a.get('summary','')} {a.get('llm_summary','')}"
-        a_keywords = set(get_keywords(text))
-        score = len(q_keywords & a_keywords)
-        scored.append((score, a))
-    scored.sort(reverse=True, key=lambda x: x[0])
-    # If all scores are zero, fallback to most recent
-    if scored and scored[0][0] == 0:
-        return articles[:top_n]
-    return [a for score, a in scored[:top_n]]
+        title_text = a.get('title', '').lower()
+        body_text = f"{a.get('summary', '')} {a.get('llm_summary', '')}".lower()
+        title_kw = set(get_keywords(title_text))
+        body_kw = set(get_keywords(body_text))
+        
+        # Entity matching: title match = 6x, body match = 2x
+        match_score = (len(q_keywords & title_kw) * 6) + (len(q_keywords & body_kw) * 2) if q_keywords else 1
+        
+        # Time recency boost
+        art_dt = a.get('created_at')
+        if not art_dt:
+            time_boost = 0
+        else:
+            if art_dt.tzinfo is None:
+                art_dt = art_dt.replace(tzinfo=timezone.utc).astimezone(IST_TZ)
+            time_boost = 5 if (is_temporal and art_dt >= cutoff_7d) else 0
+
+        total_score = match_score + time_boost
+        scored.append((total_score, match_score, a))
+
+    # Sort by total score descending, then match score descending
+    scored.sort(reverse=True, key=lambda x: (x[0], x[1]))
+    positive_matches = [a for total, match, a in scored if match > 0]
+    if positive_matches:
+        return positive_matches[:top_n]
+    return articles[:top_n]
 
 @app.post("/auth/register", response_model=UserResponse)
 async def register(user_data: UserCreate, db: Session = Depends(get_db)):
@@ -621,19 +670,32 @@ def chat_page(request: Request):
     return templates.TemplateResponse(request=request, name="chat.html", context={})
 
 @app.post('/chat')
-async def chat_endpoint(request: Request):
+async def chat_endpoint(request: Request, db: Session = Depends(get_db)):
     data = await request.json()
     question = data.get('question', '')
     history = data.get('history', [])
     
-    # Load all articles
+    # Load recent articles from database (fast & resilient on Render)
     articles = []
-    if os.path.exists(SUMMARIES_DIR):
-        for filename in sorted(os.listdir(SUMMARIES_DIR), reverse=True):
-            if filename.endswith('.json'):
-                with open(os.path.join(SUMMARIES_DIR, filename), 'r', encoding='utf-8') as f:
-                    article = json.load(f)
-                articles.append(article)
+    try:
+        db_arts = db.query(Article).order_by(Article.created_at.desc()).limit(150).all()
+        for a in db_arts:
+            articles.append({
+                'id': a.id,
+                'title': a.title,
+                'summary': a.summary or '',
+                'llm_summary': a.llm_summary or '',
+                'link': a.link,
+                'source': a.source
+            })
+    except Exception as e:
+        print(f"[CHAT DB WARNING] Falling back to file summaries: {e}")
+        if os.path.exists(SUMMARIES_DIR):
+            for filename in sorted(os.listdir(SUMMARIES_DIR), reverse=True):
+                if filename.endswith('.json'):
+                    with open(os.path.join(SUMMARIES_DIR, filename), 'r', encoding='utf-8') as f:
+                        article = json.load(f)
+                    articles.append(article)
                 
     # Combine question with previous user message for search context
     search_query = question
@@ -652,7 +714,7 @@ from collections import deque
 AI_SETTINGS = {
     "model": "openai/gpt-oss-120b",
     "temperature": 0.7,
-    "max_tokens": 150
+    "max_tokens": 800
 }
 
 SCRAPER_LOGS = deque(maxlen=100)

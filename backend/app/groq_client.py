@@ -211,6 +211,15 @@ def call_groq(api_key: str, payload: dict, timeout: int = 25, preferred_model: s
                     content = choice["reasoning"]
 
                 clean_text = content.strip() if content else ""
+                
+                # Sanitize output: remove any internal <think> blocks or raw planning echoes
+                if clean_text:
+                    clean_text = re.sub(r"<think>.*?</think>", "", clean_text, flags=re.DOTALL).strip()
+                    if clean_text.startswith("User asks:") or clean_text.startswith("User is asking:"):
+                        lines = clean_text.split("\n")
+                        filtered = [l for l in lines if not l.startswith("User asks") and not l.startswith("Need to provide") and not l.startswith("User is asking")]
+                        clean_text = "\n".join(filtered).strip()
+
                 print(f"[GROQ SUCCESS] Handled via model: '{model}'")
                 return clean_text, model
 
