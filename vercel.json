@@ -20,6 +20,10 @@
       "dest": "https://agentic-ai-news-platform.onrender.com/api/$1"
     },
     {
+      "src": "/auth/(.*)",
+      "dest": "https://agentic-ai-news-platform.onrender.com/auth/$1"
+    },
+    {
       "src": "/ping",
       "dest": "https://agentic-ai-news-platform.onrender.com/ping"
     },
