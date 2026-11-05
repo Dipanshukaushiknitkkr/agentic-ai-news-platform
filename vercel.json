@@ -16,14 +16,16 @@
   ],
   "routes": [
     {
+      "src": "/api/(.*)",
+      "dest": "https://agentic-ai-news-platform.onrender.com/api/$1"
+    },
+    {
+      "src": "/ping",
+      "dest": "https://agentic-ai-news-platform.onrender.com/ping"
+    },
+    {
       "src": "/(.*)",
       "dest": "api/index.py"
-    }
-  ],
-  "crons": [
-    {
-      "path": "/api/cron/scrape",
-      "schedule": "0 * * * *"
     }
   ]
 }
