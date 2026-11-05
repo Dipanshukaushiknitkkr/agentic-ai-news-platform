@@ -1,0 +1,11 @@
+.venv
+__pycache__
+*.pyc
+.git
+.gitignore
+.vscode
+.env
+tech_news.db
+scratch
+*.md
+PROJECT_REPORT.txt

@@ -1,0 +1,9 @@
+{
+  "title": "Vibe genes? Natural(ish) language comes to protein, genome design software",
+  "link": "https://arstechnica.com/science/2026/10/vibe-genes-naturalish-language-comes-to-protein-genome-design-software/",
+  "summary": "You can apparently now tell AI tools what sort of protein you want them to make.",
+  "published": "Tue, 27 Oct 2026 18:49:08 +0000",
+  "image_url": "https://cdn.arstechnica.net/wp-content/uploads/2025/10/GettyImages-615307388-832x648.jpg",
+  "llm_summary": "Scientists have now built AI‑driven tools that let researchers describe the desired function or “vibe” of a protein in plain language, and the software translates that description into a DNA sequence that will produce the protein. By combining natural‑language prompts with advanced protein‑folding models, the system can design novel proteins and even whole genomes, dramatically speeding up biotech research and opening up new possibilities for custom‑made biomolecules.",
+  "source": "Ars Technica"
+}

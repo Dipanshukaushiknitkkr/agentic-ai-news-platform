@@ -7,7 +7,8 @@ except ImportError:
 import os
 
 # Database configuration
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./tech_news.db")
+default_db_url = "sqlite:////tmp/tech_news.db" if (os.getenv("VERCEL") or os.getenv("NOW_REGION")) else "sqlite:///./tech_news.db"
+DATABASE_URL = os.getenv("DATABASE_URL", default_db_url)
 
 # Force psycopg2 dialect for PostgreSQL (natively supports sslmode=require)
 if DATABASE_URL.startswith("postgres://"):

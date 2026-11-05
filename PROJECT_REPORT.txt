@@ -1,0 +1,365 @@
+================================================================================
+                     TECHCORE: AGENTIC AI NEWS PLATFORM
+                     COMPLETE TECHNICAL PROJECT REPORT
+================================================================================
+
+1. EXECUTIVE SUMMARY & PROJECT OVERVIEW
+--------------------------------------------------------------------------------
+Project Name: TechCore (Agentic AI Tech News & Intelligence Platform)
+Repository: https://github.com/Dipanshukaushiknitkkr/agentic-ai-news-platform
+Core Purpose:
+TechCore is an autonomous, production-grade intelligence platform that continuously
+ingests, analyzes, deduplicates, summarizes, categorizes, and serves global tech news.
+It solves three fundamental challenges in digital tech journalism:
+  1. Information Overload & Repetitive Coverage: Multiple global news outlets
+     (TechCrunch, The Verge, Wired, Ars Technica) report on identical announcements,
+     leading to cluttered feeds.
+  2. Slow Digestion & Lack of Executive Context: Long articles take time to read,
+     while automated summaries often lack depth or technical clarity.
+  3. LLM API Deprecation & Single Point of Failure: Production AI pipelines frequently
+     break when AI providers deprecate model names or encounter rate limits.
+
+TechCore implements:
+  - 24/7 background asynchronous scraping.
+  - Hybrid string/token deduplication (Jaccard + Levenshtein).
+  - Resilient, dynamic LLM gateway with live discovery and runtime fallback.
+  - 100% article coverage across a 12-category taxonomy.
+  - Time-aware Retrieval-Augmented Generation (RAG) conversational AI assistant.
+  - Secure role-based administration console with live telemetry.
+
+
+================================================================================
+2. SYSTEM ARCHITECTURE & DATA FLOW
+================================================================================
+
+                               +--------------------+
+                               | Global RSS Sources |
+                               | (TechCrunch, Verge,|
+                               | Wired, ArsTechnica)|
+                               +---------+----------+
+                                         |
+                                         v
+                         +-------------------------------+
+                         | Multi-Source Scraper Engine   |
+                         | (APScheduler / Manual Worker) |
+                         +---------------+---------------+
+                                         |
+                                         v
+                         +-------------------------------+
+                         | Cross-Publisher Deduplicator  |
+                         | (Jaccard Overlap >= 0.48 &    |
+                         |  Levenshtein Ratio >= 0.62)   |
+                         +---------------+---------------+
+                                         |
+                                         v
+                         +-------------------------------+
+                         | Dynamic Groq AI Client        |
+                         | (Live Model Discovery / Cache)|
+                         +---------------+---------------+
+                                         |
+                                         v
+                         +-------------------------------+
+                         | Automated Categorization      |
+                         | Service (12 Taxonomy Topics)  |
+                         +---------------+---------------+
+                                         |
+                                         v
+                     +---------------------------------------+
+                     | Database Tier (PostgreSQL / SQLite)   |
+                     | Articles, Users, Categories, Bookmarks|
+                     +-------------------+-------------------+
+                                         |
+             +---------------------------+---------------------------+
+             |                                                       |
+             v                                                       v
++-----------------------------+                         +-----------------------------+
+| FastAPI Endpoints & Services|                         | User Presentation Tier      |
+| - Paginated Infinite Feed   |                         | - Hero Info Bar (IST Clock) |
+| - Time-Aware RAG Assistant  | <---------------------> | - 3D Tilt News Grid         |
+| - Tech History Milestones   |                         | - Category Filtering Pills  |
+| - JWT / OAuth2 Security     |                         | - Interactive Chat UI       |
+| - Admin Telemetry / Tuning  |                         | - Admin Control Console     |
++-----------------------------+                         +-----------------------------+
+
+
+================================================================================
+3. TECHNOLOGIES USED & JUSTIFICATION ("WHAT" & "WHY")
+================================================================================
+
+1. FastAPI (Python 3.11+)
+   - WHAT: Modern, high-performance web framework for building APIs with Python.
+   - WHY: Native asynchronous support (async/await), automatic OpenAPI documentation,
+     high throughput with Starlette, and seamless Pydantic data validation.
+
+2. Uvicorn & AsyncIO
+   - WHAT: Lightning-fast ASGI web server implementation.
+   - WHY: Enables concurrent non-blocking request processing, critical for managing
+     LLM network requests and scheduled background scraping tasks simultaneously.
+
+3. SQLAlchemy (ORM)
+   - WHAT: Object Relational Mapper for Python database access.
+   - WHY: Abstracts SQL queries into maintainable object models, protects against SQL
+     injection, and provides `joinedload` query optimization to eliminate N+1 query
+     performance issues.
+
+4. PostgreSQL (Neon Cloud) & SQLite (Local Development)
+   - WHAT: Enterprise relational databases.
+   - WHY:
+     * SQLite: Zero-configuration local database for swift offline development.
+     * Neon PostgreSQL: Cloud-native serverless PostgreSQL providing persistent
+       storage on platforms with ephemeral filesystems (like Render).
+
+5. Groq Cloud API & Fast LLM Inference
+   - WHAT: High-speed hardware-accelerated LLM API provider.
+   - WHY: Extremely low latency (hundreds of tokens per second). Enables real-time
+     summaries and responsive user chat interactions without slow waiting times.
+
+6. APScheduler (Advanced Python Scheduler)
+   - WHAT: In-process task scheduling framework.
+   - WHY: Eliminates the need for external heavyweight message brokers (like Celery/
+     RabbitMQ/Redis) on smaller server footprints while running hourly cron jobs.
+
+7. Feedparser & BeautifulSoup4
+   - WHAT: Robust RSS parsing and HTML scraping libraries.
+   - WHY: Handles varied XML/RSS/Atom structures and cleans messy HTML markup,
+     enclosures, and thumbnail metadata from publisher feeds.
+
+8. Python-JOSE & Passlib (Bcrypt)
+   - WHAT: Security libraries for JSON Web Token handling and password hashing.
+   - WHY: Implements stateless, cryptographically secure authentication (OAuth2
+     Password Bearer flow) and salted irreversible password storage.
+
+9. Jinja2 Templates + Vanilla CSS3 & Modern JavaScript
+   - WHAT: Server-side rendering combined with lightweight frontend client scripting.
+   - WHY: Immediate initial page load speed, zero heavy client bundle build steps
+     (like Webpack or Vite), search-engine friendly HTML, and custom responsive 3D
+     card designs using CSS glassmorphism.
+
+
+================================================================================
+4. DETAILED COMPONENT WORKING & IMPLEMENTATION
+================================================================================
+
+--------------------------------------------------------------------------------
+4.1. News Ingestion Pipeline (`backend/scrapers/techcrunch.py`)
+--------------------------------------------------------------------------------
+Working:
+1. Feeds Queried: TechCrunch, The Verge, Wired, and Ars Technica.
+2. Ingestion Cycle: Triggered automatically every 1 hour by APScheduler or on-demand
+   via the Admin panel endpoint `/api/admin/trigger-scrape`.
+3. Extraction: Parses title, permalink, publication date, raw content, and article
+   featured images (extracted from `media_content`, enclosures, or OpenGraph tags).
+4. Direct Database Persistence: Saves directly into PostgreSQL/SQLite via
+   `_save_article_to_db()` instead of solely writing to disk, ensuring articles
+   persist across server reboots.
+
+--------------------------------------------------------------------------------
+4.2. Intelligent Cross-Publisher Deduplication
+--------------------------------------------------------------------------------
+Working:
+When multiple publishers cover the exact same milestone, TechCore detects and discards
+redundant stories to keep the user feed clean.
+Algorithm:
+- Input headline is converted to lowercase tokens, stripping punctuation and common
+  journalistic stopwords (e.g., 'announces', 'launches', 'unveils', 'says').
+- Metric 1: Token-level Jaccard Overlap
+    Jaccard = Intersection(Tokens) / Union(Tokens)
+  Threshold: Jaccard >= 0.48 with at least 3 matching core words.
+- Metric 2: Levenshtein Sequence Matcher Ratio
+  Threshold: SequenceMatcher Ratio >= 0.62.
+- If either condition is met, the story is classified as a duplicate and skipped.
+
+--------------------------------------------------------------------------------
+4.3. Dynamic Self-Healing Groq LLM Gateway (`backend/app/groq_client.py`)
+--------------------------------------------------------------------------------
+Working:
+To prevent application crashes caused by third-party model deprecations:
+1. Dynamic Discovery: Calls Groq's `/openai/v1/models` API endpoint to inspect which
+   models are active and available in real-time.
+2. Filter: Filters out non-chat models (Whisper, TTS, Prompt-Guard, Embeddings).
+3. Quality Hierarchy: Orders active models based on quality:
+   - Primary: openai/gpt-oss-120b
+   - Secondary: qwen/qwen3.8-27b
+   - Tertiary: openai/gpt-oss-20b
+   - Quaternary: groq/compound, groq/compound-mini, etc.
+4. Caching: Caches the list in RAM for 15 minutes (900 seconds) for zero network latency.
+5. Auto-Eviction Fallback: If a model throws a 400/404 (model deprecated) or 429 (rate
+   limit), the gateway evicts it from the cache and immediately retries the prompt with
+   the next candidate in under 1 second.
+6. Output Sanitization: Strips `<think>...</think>` internal reasoning tags and prompt
+   echoes to ensure clean, professional output.
+
+--------------------------------------------------------------------------------
+4.4. Automated Categorization Engine (`backend/services/categorization_service.py`)
+--------------------------------------------------------------------------------
+Working:
+TechCore automatically classifies every story into 12 distinct categories:
+  1. Artificial Intelligence
+  2. Big Tech
+  3. Startups & Funding
+  4. Hardware & Chips
+  5. Science & Space
+  6. Gaming
+  7. Cybersecurity
+  8. Mobile & Apps
+  9. Enterprise & SaaS
+  10. Electric Vehicles
+  11. Fintech
+  12. Social Media
+
+Scoring Algorithm:
+- Evaluates title and summary against pre-configured category keyword banks.
+- Title matches receive 3x bonus weighting over body matches.
+- Multi-tier Fallback: If strict keyword scores are under threshold, the engine evaluates
+  broader contextual terms (e.g., NASA/SpaceX -> Science & Space; GPU/ASML -> Hardware).
+- Outcome: 100% of articles in the database receive accurate category associations.
+
+--------------------------------------------------------------------------------
+4.5. Time-Aware Retrieval-Augmented Generation (RAG) AI Assistant (`backend/app/webapp.py`)
+--------------------------------------------------------------------------------
+Working:
+Accessible at `/chat`, this conversational assistant answers complex tech queries
+grounded in real platform news.
+Workflow:
+1. Query Parsing: Filters conversational stop-words ('news', 'tell me', 'about', 'last')
+   to isolate the core subject entity (e.g., 'Apple', 'Nvidia').
+2. Temporal Intent Detection: Detects phrases like 'last 7 days', 'this week', 'recent'.
+3. Time-Decay Scoring: Matches candidate articles and assigns bonus points to articles
+   published within the requested timeframe.
+4. Prompt Formulation: Injects the top 6 verified articles with source names, dates,
+   and summaries into an Executive Analyst system prompt with the current date.
+5. Synthesis: Generates structured briefings containing:
+   - Executive Overview
+   - Major Developments (with source citations & dates)
+   - Strategic Industry Implications
+6. Memory: Retains up to 8 conversation turns for contextual follow-up questions.
+
+--------------------------------------------------------------------------------
+4.6. Admin Instrumentation & Real-Time Telemetry (`frontend/templates/admin.html`)
+--------------------------------------------------------------------------------
+Working:
+Secured by JWT authentication, the `/admin` portal provides:
+- Live Platform Statistics: Total user counts, article counts, source distributions.
+- Article Management: Search, paginate, trigger re-summarization, or delete records.
+- User Role Management: Toggle administrator privileges.
+- Dynamic AI Tuner: Switch primary LLM models, tune temperature sliders (0.0 to 1.0),
+  and configure token limits on-the-fly without server restarts.
+- Scraper Console: View streaming in-memory logs and manually trigger scraping.
+
+--------------------------------------------------------------------------------
+4.7. Today in Tech History Subsystem (`backend/services/history_service.py`)
+--------------------------------------------------------------------------------
+Working:
+- Pre-compiled 365-day database containing notable tech milestones mapped by `MM-DD`.
+- On unmapped days, Groq AI is prompted to extract historical breakthroughs.
+- Results are cached on disk to provide instant responses on subsequent visits.
+
+
+================================================================================
+5. DATABASE SCHEMA & DATA RELATIONSHIPS
+================================================================================
+
+1. `users` Table:
+   - `id`: String (UUID Primary Key)
+   - `email`: String (Unique, Indexed)
+   - `hashed_password`: String (Bcrypt Hash)
+   - `full_name`: String
+   - `is_active`: Boolean
+   - `is_verified`: Boolean
+   - `is_admin`: Boolean
+   - `created_at`: DateTime (Timezone-aware)
+   - `daily_digest_enabled`: Boolean
+   - `digest_time`: String
+
+2. `categories` Table:
+   - `id`: Integer (Primary Key)
+   - `name`: String (Unique, Indexed)
+   - `description`: Text
+   - `keywords`: JSON (Array of keywords)
+
+3. `articles` Table:
+   - `id`: String (Slugified Primary Key)
+   - `title`: String
+   - `link`: String
+   - `summary`: Text (Original RSS snippet)
+   - `llm_summary`: Text (High-density AI summary)
+   - `published`: String (Formatted date)
+   - `image_url`: String
+   - `source`: String (Publisher Name)
+   - `created_at`: DateTime (Indexed for pagination)
+
+4. `article_categories` Table (Many-to-Many Association):
+   - `id`: Integer (Primary Key)
+   - `article_id`: Foreign Key (`articles.id`)
+   - `category_id`: Foreign Key (`categories.id`)
+   - `relevance_score`: Integer (1-10 Scale)
+
+5. `user_interests` Table (Many-to-Many Association):
+   - Maps `users.id` to `categories.id` for customized news delivery.
+
+
+================================================================================
+6. PROJECT FILE & DIRECTORY STRUCTURE
+================================================================================
+
+agentic-ai-news-platform/
+│
+├── main.py                          # ASGI Entry point (uvicorn runner)
+├── requirements.txt                 # Project dependencies
+├── tech_news.db                     # Local SQLite database
+├── .env / .env.example              # Environment variables & secrets
+│
+├── backend/
+│   ├── app/
+│   │   ├── auth.py                  # JWT creation, Bcrypt & OAuth2 handling
+│   │   ├── database.py              # Engine setup, SessionLocal, auto-migrations
+│   │   ├── groq_client.py           # Auto-adaptive dynamic Groq LLM client
+│   │   ├── models.py                # SQLAlchemy ORM database models
+│   │   ├── schemas.py               # Pydantic schemas for request/response validation
+│   │   └── webapp.py                # FastAPI routes, endpoints & scheduler
+│   │
+│   ├── scrapers/
+│   │   └── techcrunch.py            # Multi-source RSS scraper & deduplicator
+│   │
+│   └── services/
+│       ├── categorization_service.py# Taxonomy classification & DB cleanup
+│       ├── digest_service.py        # Newsletter digest compilation
+│       └── history_service.py       # Today in Tech History engine
+│
+├── frontend/
+│   ├── static/
+│   │   ├── css/style.css            # Stylesheet (Glassmorphism, 3D tilt, responsive)
+│   │   └── js/                      # Frontend helper scripts
+│   └── templates/
+│       ├── index.html               # Main landing page & infinite news grid
+│       ├── chat.html                # Dedicated AI Assistant chat interface
+│       ├── admin.html               # Admin control panel & log console
+│       └── dashboard.html           # User profile & bookmark manager
+│
+└── data/
+    ├── history/                     # Cached date-based tech history JSON files
+    └── summaries/                   # Scraped article JSON backups
+
+
+================================================================================
+7. KEY SYSTEM HIGHLIGHTS FOR EVALUATION & INTERVIEWS
+================================================================================
+1. Zero-Downtime AI Gateway:
+   Unlike naive AI implementations with hardcoded model strings that break upon
+   deprecation, TechCore features runtime model discovery, auto-eviction, and fallback.
+2. Query Optimization (N+1 Elimination):
+   Uses SQLAlchemy `joinedload` across relational tables to ensure feed queries
+   execute in constant O(1) database queries.
+3. Hybrid Algorithmic Deduplication:
+   Combines Token Jaccard overlap and Levenshtein sequence matching to discard
+   syndicated articles without requiring heavy embedding model overhead.
+4. Ephemeral Filesystem Immunity:
+   Designed for serverless containers (Render/Docker) by persisting scraped articles
+   directly into PostgreSQL at ingestion time.
+5. Temporal Awareness in RAG:
+   Understands date-specific user intents and applies time-decay weighting to prevent
+   stale news from appearing in fresh briefings.
+
+================================================================================
+                              END OF REPORT
+================================================================================

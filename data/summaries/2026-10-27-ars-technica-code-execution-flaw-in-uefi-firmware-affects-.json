@@ -1,0 +1,9 @@
+{
+  "title": "Code-execution flaw in UEFI firmware affects most servers on planet Earth",
+  "link": "https://arstechnica.com/security/2026/10/code-execution-flaw-in-uefi-firmware-threatens-most-servers-on-planet-earth/",
+  "summary": "Critical flaw in EDK2 allows attackers to execute code early in the boot process.",
+  "published": "Tue, 27 Oct 2026 20:25:55 +0000",
+  "image_url": "https://cdn.arstechnica.net/wp-content/uploads/2024/04/malware.jpg",
+  "llm_summary": "A critical vulnerability has been discovered in the open‑source EDK2 UEFI firmware that powers the majority of servers worldwide. The flaw lets attackers inject and run malicious code during the very first stages of a machine’s boot process, potentially compromising the entire system before the operating system even loads. Patching or updating the firmware is now essential to protect servers from this early‑boot attack vector.",
+  "source": "Ars Technica"
+}

@@ -1,0 +1,27 @@
+{
+  "date": "28 October 2026",
+  "day": "Wednesday",
+  "date_key": "10-28",
+  "milestones": [
+    {
+      "year": "1969",
+      "title": "ARPANET Pioneer Node Activated",
+      "fact": "The first host-to-host message was transmitted across ARPANET between UCLA and Stanford, establishing the foundation of the modern Internet."
+    },
+    {
+      "year": "1991",
+      "title": "Linus Torvalds Announces Linux Kernel",
+      "fact": "Linus Torvalds released the initial Linux kernel 0.01, creating the open-source operating system that now powers the majority of global cloud servers."
+    },
+    {
+      "year": "2007",
+      "title": "Steve Jobs Unveils the Original iPhone",
+      "fact": "Apple announced the iPhone, combining a widescreen iPod, a revolutionary mobile phone, and a breakthrough internet communicator into a single multitouch device."
+    },
+    {
+      "year": "2022",
+      "title": "OpenAI Launches ChatGPT",
+      "fact": "OpenAI launched ChatGPT, sparking the generative AI revolution and making large language models accessible to hundreds of millions worldwide."
+    }
+  ]
+}

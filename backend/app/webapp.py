@@ -68,11 +68,14 @@ if not os.path.exists(STATIC_DIR):
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
-@app.get("/ping")
-@app.get("/health")
+from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
+
+@app.api_route("/ping", methods=["GET", "HEAD"])
+@app.api_route("/health", methods=["GET", "HEAD"])
+@app.api_route("/healthz", methods=["GET", "HEAD"])
 def health_check():
-    """Lightweight health check endpoint for keep-alive pingers"""
-    return {"status": "ok", "message": "Server active"}
+    """Ultra-lightweight keep-alive health check for UptimeRobot, cron jobs & Render pingers"""
+    return PlainTextResponse("OK", status_code=200)
 
 @app.get("/api/tech-history/today")
 def get_today_tech_history():
@@ -99,23 +102,38 @@ def scheduled_news_scrape_job():
     except Exception as e:
         print(f"[SCHEDULER ERROR]: {e}")
 
-async def run_initial_scrape_async():
-    """Run initial scrape in background thread without blocking server start"""
+async def run_startup_background_tasks():
+    """Run recategorization and initial scrape in background without delaying server startup/ping responses"""
+    try:
+        await asyncio.to_thread(categorizer.recategorize_all_existing_articles)
+    except Exception as e:
+        print(f"[STARTUP BACKGROUND WARNING] Recategorization note: {e}")
     await asyncio.to_thread(scheduled_news_scrape_job)
 
-# Initialize database and background scheduler on startup (Non-blocking)
+# Initialize database and background scheduler on startup (Immediate port binding)
 @app.on_event("startup")
 async def startup_event():
     init_database()
-    # Re-tag database with updated 2026 taxonomy keywords
-    categorizer.recategorize_all_existing_articles()
-    # Trigger background scrape asynchronously without blocking port binding or HTTP responses
-    asyncio.create_task(run_initial_scrape_async())
-    # Schedule hourly background news scraping
-    if not scheduler.running:
-        scheduler.add_job(scheduled_news_scrape_job, 'interval', hours=1, id='hourly_news_scrape', replace_existing=True)
-        scheduler.start()
-        print("[SCHEDULER] Background news scraper running 24/7 every 1 hour.")
+    is_vercel = bool(os.getenv("VERCEL") or os.getenv("NOW_REGION"))
+    if not is_vercel:
+        # Trigger background tasks asynchronously without blocking port binding or HTTP responses
+        asyncio.create_task(run_startup_background_tasks())
+        # Schedule hourly background news scraping
+        if not scheduler.running:
+            scheduler.add_job(scheduled_news_scrape_job, 'interval', hours=1, id='hourly_news_scrape', replace_existing=True)
+            scheduler.start()
+            print("[SCHEDULER] Background news scraper running 24/7 every 1 hour.")
+    else:
+        print("[VERCEL] Serverless mode active: In-process background scheduler disabled.")
+
+@app.get("/api/cron/scrape")
+async def vercel_cron_scrape():
+    """Triggered by Vercel Cron or external scheduled pingers"""
+    try:
+        await asyncio.to_thread(scheduled_news_scrape_job)
+        return {"status": "success", "message": "Scrape completed successfully"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 
 SUMMARIES_DIR = os.path.join(BASE_DIR, 'data', 'summaries')
 PLACEHOLDER_IMAGE = 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&auto=format&fit=crop&q=60'

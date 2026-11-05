@@ -15,18 +15,29 @@ except ImportError:
     from app.models import Article, Category, ArticleCategory
     from app.database import get_db, SessionLocal
 
+class CachedCategory:
+    """Session-independent lightweight category representation to prevent DetachedInstanceError"""
+    def __init__(self, id: int, name: str, keywords: list):
+        self.id = id
+        self.name = name
+        self.keywords = list(keywords or [])
+
 class ContentCategorizer:
     """Service for automatically categorizing articles based on content"""
     
     def __init__(self):
-        self.categories_cache = None
+        self.categories_cache: List[CachedCategory] = None
         self.stopwords = set(['the', 'is', 'at', 'which', 'on', 'a', 'an', 'and', 'or', 'for', 'to', 'of', 'in', 'with', 'by', 'as', 'from', 'that', 'this', 'it', 'are', 'be', 'was', 'were', 'has', 'had', 'have', 'but', 'not', 'if', 'then', 'so', 'do', 'does', 'did', 'can', 'will', 'just', 'about', 'into', 'over', 'after', 'before', 'more', 'less', 'than', 'up', 'out', 'off', 'no', 'yes', 'you', 'i', 'we', 'they', 'he', 'she', 'his', 'her', 'their', 'our', 'my', 'your'])
     
-    def get_categories(self, db: Session) -> List[Category]:
-        """Get all categories with their keywords"""
-        if self.categories_cache is None:
-            self.categories_cache = db.query(Category).all()
-        return self.categories_cache
+    def get_categories(self, db: Session = None) -> List[CachedCategory]:
+        """Get all categories with their keywords, detached from SQLAlchemy sessions"""
+        if (self.categories_cache is None or not self.categories_cache) and db is not None:
+            cats = db.query(Category).all()
+            self.categories_cache = [
+                CachedCategory(c.id, c.name, list(c.keywords or []))
+                for c in cats
+            ]
+        return self.categories_cache or []
     
     def extract_keywords(self, text: str) -> List[str]:
         """Extract keywords from text"""
@@ -159,38 +170,43 @@ class ContentCategorizer:
             if owns_session:
                 db.close()
     
-    def cleanup_old_articles(self, db: Session = None, days: int = 7):
+    def cleanup_old_articles(self, db: Session = None, days: int = 30, min_keep: int = 50):
         """Delete articles (and their category links) older than `days` days.
-        Uses Article.created_at, since `published` is a raw RSS string and not
-        reliably parseable/sortable across feeds. Also deletes the matching
-        .md/.json files in data/summaries/ so they aren't re-synced back in
-        on the next sync pass.
+        Uses Article.created_at, and guarantees at least `min_keep` articles
+        remain in the database so the feed is never wiped.
         """
         owns_session = db is None
         if owns_session:
             db = SessionLocal()
         try:
             total_articles = db.query(Article).count()
-            if total_articles <= 15:
-                print("Cleanup skipped: preserving minimum 15 articles.")
+            if total_articles <= min_keep:
+                print(f"Cleanup skipped: total articles ({total_articles}) <= minimum ({min_keep}).")
                 return 0
 
             cutoff = datetime.utcnow() - timedelta(days=days)
-            old_articles = db.query(Article).filter(Article.created_at < cutoff).all()
+            old_articles = (
+                db.query(Article)
+                .filter(Article.created_at < cutoff)
+                .order_by(Article.created_at.asc())
+                .all()
+            )
             
-            # Keep at least 15 most recent articles
-            if total_articles - len(old_articles) < 15:
-                # Sort old articles descending by date and keep enough to maintain 15
-                old_articles.sort(key=lambda a: a.created_at, reverse=True)
-                allowed_to_delete = total_articles - 15
-                old_articles = old_articles[allowed_to_delete:]
+            # If removing all old articles would leave fewer than min_keep,
+            # only delete down to min_keep (oldest first)
+            max_deletable = total_articles - min_keep
+            if len(old_articles) > max_deletable:
+                old_articles = old_articles[:max_deletable]
 
             deleted_count = len(old_articles)
-            for article in old_articles:
-                db.query(ArticleCategory).filter(ArticleCategory.article_id == article.id).delete()
-                db.delete(article)
-            db.commit()
-            print(f"Cleanup: removed {deleted_count} old articles.")
+            if deleted_count > 0:
+                for article in old_articles:
+                    db.query(ArticleCategory).filter(ArticleCategory.article_id == article.id).delete()
+                    db.delete(article)
+                db.commit()
+                print(f"Cleanup: removed {deleted_count} old articles (preserved {total_articles - deleted_count}).")
+            else:
+                print("Cleanup: no articles older than cutoff to remove.")
             return deleted_count
         except Exception as e:
             print(f"Error cleaning up old articles: {e}")
@@ -418,9 +434,9 @@ def sync_articles():
     """Sync articles from files to database"""
     categorizer.sync_articles_from_files()
 
-def cleanup_old_articles(days: int = 7):
-    """Remove articles older than `days` days from the database"""
-    categorizer.cleanup_old_articles(days=days)
+def cleanup_old_articles(days: int = 30, min_keep: int = 50):
+    """Remove articles older than `days` days from the database while preserving min_keep"""
+    categorizer.cleanup_old_articles(days=days, min_keep=min_keep)
 
 if __name__ == "__main__":
     sync_articles()

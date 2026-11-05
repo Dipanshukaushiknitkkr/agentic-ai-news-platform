@@ -1,0 +1,17 @@
+{
+  "date": "06 September 2026",
+  "day": "Sunday",
+  "date_key": "09-06",
+  "milestones": [
+    {
+      "year": "1991",
+      "title": "Tim Berners-Lee Posts First WWW Summary",
+      "fact": "Tim Berners-Lee publicly posted the first summary of the World Wide Web project on the alt.hypertext newsgroup, officially inviting global developers to join the Web."
+    },
+    {
+      "year": "1978",
+      "title": "First Production 64KB RAM Chip",
+      "fact": "IBM researchers unveiled the industry's first working 64-kilobit dynamic RAM chip, dramatically multiplying computer memory capacity."
+    }
+  ]
+}

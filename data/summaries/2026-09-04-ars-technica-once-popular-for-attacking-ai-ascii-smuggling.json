@@ -1,0 +1,9 @@
+{
+  "title": "Once popular for attacking AI, ASCII smuggling is embraced by spammers",
+  "link": "https://arstechnica.com/security/2026/09/once-popular-for-attacking-ai-ascii-smuggling-is-embraced-by-spammers/",
+  "summary": "A once-overlooked block of unicode that's invisible to humans is gaining ever wider use.",
+  "published": "Fri, 04 Sep 2026 17:18:12 +0000",
+  "image_url": "https://cdn.arstechnica.net/wp-content/uploads/2026/09/no-eyes-1152x648.jpg",
+  "llm_summary": "A hidden block of Unicode characters—often called “ASCII smuggling”—was once used by security researchers to test AI systems’ ability to detect malicious code. Because these characters are invisible to human eyes but still processed by computers, spammers have started exploiting them to sneak past filters and embed unwanted content. The technique, originally a research tool, is now being adopted in real‑world spam campaigns.",
+  "source": "Ars Technica"
+}
