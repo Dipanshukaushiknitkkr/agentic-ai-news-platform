@@ -114,17 +114,41 @@ class GroundedClaimExtractor:
             if not raw_response:
                 return []
                 
-            # Clean markdown formatting if present
-            clean_text = raw_response.strip()
-            if clean_text.startswith("```"):
-                parts = clean_text.split("```")
-                if len(parts) >= 2:
-                    clean_text = parts[1]
-                    if clean_text.startswith("json"):
-                        clean_text = clean_text[4:]
-            clean_text = clean_text.strip()
+            # Clean markdown formatting, reasoning tags, or conversational preamble if present
+            clean_text = re.sub(r"<think>.*?</think>", "", raw_response, flags=re.DOTALL).strip()
             
-            raw_claims = json.loads(clean_text)
+            raw_claims = None
+            # Search for outermost JSON array [ ... ]
+            start_bracket = clean_text.find("[")
+            end_bracket = clean_text.rfind("]")
+            if start_bracket != -1 and end_bracket != -1 and end_bracket > start_bracket:
+                try:
+                    parsed = json.loads(clean_text[start_bracket:end_bracket + 1])
+                    if isinstance(parsed, list):
+                        raw_claims = parsed
+                except Exception:
+                    pass
+
+            # Fallback markdown fence stripping
+            if raw_claims is None:
+                fence_match = re.search(r"```(?:json)?\s*(\[.*?\])\s*```", clean_text, flags=re.DOTALL)
+                if fence_match:
+                    try:
+                        parsed = json.loads(fence_match.group(1))
+                        if isinstance(parsed, list):
+                            raw_claims = parsed
+                    except Exception:
+                        pass
+
+            # Final direct json.loads fallback
+            if raw_claims is None:
+                try:
+                    parsed = json.loads(clean_text)
+                    if isinstance(parsed, list):
+                        raw_claims = parsed
+                except Exception:
+                    pass
+
             if not isinstance(raw_claims, list):
                 return []
                 
