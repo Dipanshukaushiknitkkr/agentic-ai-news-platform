@@ -279,10 +279,12 @@ class ContentCategorizer:
                     if not title:
                         continue
                         
-                    # Check cross-publisher duplicate headline
-                    if self.is_duplicate_title(title, existing_titles):
-                        duplicates_skipped += 1
-                        continue
+                    # Check cross-publisher duplicate headline (legacy mode only)
+                    dedup_mode = os.getenv("DEDUP_MODE", "cluster")
+                    if dedup_mode == "legacy":
+                        if self.is_duplicate_title(title, existing_titles):
+                            duplicates_skipped += 1
+                            continue
                     
                     # Parse publication date or filename date prefix
                     pub_str = article_data.get('published', '')
@@ -314,6 +316,14 @@ class ContentCategorizer:
                     )
                     db.add(article)
                     db.flush()
+
+                    if dedup_mode == "cluster":
+                        try:
+                            from dedup.pipeline import get_pipeline
+                            pipeline = get_pipeline()
+                            pipeline.process_article(article, db)
+                        except Exception as cluster_err:
+                            print(f"[CLUSTERING ERROR] Failed to cluster {article_id}: {cluster_err}")
                     
                     # Categorize the article
                     categorizations = self.categorize_article(article_data, db)
@@ -346,11 +356,28 @@ class ContentCategorizer:
             db.close()
 
     def deduplicate_existing_database(self, db: Session = None) -> int:
-        """Scan and purge duplicate articles currently in the database"""
+        """Scan and purge duplicate articles in legacy mode, or cluster unclustered articles in cluster mode"""
         owns_session = False
         if db is None:
             db = SessionLocal()
             owns_session = True
+
+        dedup_mode = os.getenv("DEDUP_MODE", "cluster")
+        if dedup_mode == "cluster":
+            try:
+                from dedup.pipeline import get_pipeline
+                pipeline = get_pipeline()
+                unclustered = db.query(Article).filter(Article.cluster_id.is_(None)).order_by(Article.created_at.asc()).all()
+                for art in unclustered:
+                    pipeline.process_article(art, db)
+                print(f"[CLUSTERING] Backfilled {len(unclustered)} unclustered stories into clusters.")
+                return 0
+            except Exception as e:
+                print(f"[CLUSTERING ERROR] in deduplicate_existing_database: {e}")
+                return 0
+            finally:
+                if owns_session:
+                    db.close()
             
         try:
             articles = db.query(Article).order_by(Article.created_at.desc()).all()

@@ -63,3 +63,11 @@ tech_news.db
 
 # Windows
 Thumbs.db
+
+# Academic documents & presentation plans (keep local only)
+PRESENTATION_PLAN.md
+MIDTERM_PRESENTATION_PLAN.md
+PROJECT_REPORT.md
+PROJECT_REPORT.txt
+COLLEGE_MIDTERM_PROJECT_REPORT.md
+LITERATURE_REVIEW.md

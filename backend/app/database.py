@@ -6,6 +6,19 @@ except ImportError:
     from app.models import Base, Category, User
 import os
 
+# Load .env file if present (local development)
+try:
+    from dotenv import load_dotenv
+    import pathlib
+    _here = pathlib.Path(__file__).resolve().parent
+    for _parent in [_here, _here.parent, _here.parent.parent]:
+        _env = _parent / ".env"
+        if _env.exists():
+            load_dotenv(str(_env), override=False)
+            break
+except ImportError:
+    pass  # dotenv not installed — rely on externally set environment variables
+
 # Database configuration
 default_db_url = "sqlite:////tmp/tech_news.db" if (os.getenv("VERCEL") or os.getenv("NOW_REGION")) else "sqlite:///./tech_news.db"
 DATABASE_URL = os.getenv("DATABASE_URL", default_db_url)
@@ -18,7 +31,9 @@ elif DATABASE_URL.startswith("postgresql://") and "+psycopg2" not in DATABASE_UR
 elif "+pg8000" in DATABASE_URL:
     DATABASE_URL = DATABASE_URL.replace("+pg8000", "+psycopg2", 1)
 
-connect_args = {"check_same_thread": False} if "sqlite" in DATABASE_URL else {}
+from sqlalchemy import event
+
+connect_args = {"check_same_thread": False, "timeout": 30} if "sqlite" in DATABASE_URL else {}
 pool_pre_ping = True if "sqlite" not in DATABASE_URL else False
 
 engine = create_engine(
@@ -26,6 +41,19 @@ engine = create_engine(
     connect_args=connect_args,
     pool_pre_ping=pool_pre_ping
 )
+
+if "sqlite" in DATABASE_URL:
+    @event.listens_for(engine, "connect")
+    def set_sqlite_pragma(dbapi_connection, connection_record):
+        try:
+            cursor = dbapi_connection.cursor()
+            cursor.execute("PRAGMA journal_mode=WAL")
+            cursor.execute("PRAGMA synchronous=NORMAL")
+            cursor.execute("PRAGMA busy_timeout=30000")
+            cursor.execute("PRAGMA foreign_keys=ON")
+            cursor.close()
+        except Exception:
+            pass
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
@@ -38,8 +66,18 @@ def get_db():
         db.close()
 
 def init_database():
-    """Initialize database and create default categories"""
+    """Initialize database, apply schema migrations, and create default categories"""
     Base.metadata.create_all(bind=engine)
+    
+    # Run automatic clustering migration (ensures new columns & tables exist on any host)
+    try:
+        try:
+            from dedup.migrate import upgrade
+        except ImportError:
+            from ...dedup.migrate import upgrade
+        upgrade()
+    except Exception as e:
+        print(f"[INIT DB WARNING] Story clustering migration note: {e}")
     
     # Auto-migration: Ensure columns exist
     try:

@@ -1,0 +1,37 @@
+[
+  {
+    "id_a": "2026-11-06-the-verge-openai-valued-at-1-25-trillion-as-rival-anthr",
+    "title_a": "OpenAI valued at $1.25 trillion, as rival Anthropic nears its IPO",
+    "id_b": "2026-11-06-techcrunch-openai-reportedly-raises-an-additional-11-bil",
+    "title_b": "OpenAI reportedly raises an additional $11 billion at a $1.25 trillion valuation",
+    "label": 1
+  },
+  {
+    "id_a": "2026-11-06-techcrunch-openai-reportedly-raises-an-additional-11-bil",
+    "title_a": "OpenAI reportedly raises an additional $11 billion at a $1.25 trillion valuation",
+    "id_b": "2026-10-27-the-verge-researchers-are-getting-tired-of-openai-gatek",
+    "title_b": "Researchers are getting tired of OpenAI gatekeeping its breakthroughs",
+    "label": 1
+  },
+  {
+    "id_a": "2026-11-06-wired-the-cybertruck-s-death-is-actually-great-news",
+    "title_a": "The Cybertruck\u2019s Death Is Actually Great News for EVs",
+    "id_b": "2026-11-06-wired-rip-cybertruck-you-were-unloved-unwanted-and-",
+    "title_b": "RIP Cybertruck. You Were Unloved, Unwanted, and Utterly Absurd",
+    "label": 1
+  },
+  {
+    "id_a": "2026-11-06-wired-the-cybertruck-s-death-is-actually-great-news",
+    "title_a": "The Cybertruck\u2019s Death Is Actually Great News for EVs",
+    "id_b": "2026-10-27-the-verge-researchers-are-getting-tired-of-openai-gatek",
+    "title_b": "Researchers are getting tired of OpenAI gatekeeping its breakthroughs",
+    "label": 0
+  },
+  {
+    "id_a": "2026-11-06-wired-rip-cybertruck-you-were-unloved-unwanted-and-",
+    "title_a": "RIP Cybertruck. You Were Unloved, Unwanted, and Utterly Absurd",
+    "id_b": "2026-10-27-the-verge-researchers-are-getting-tired-of-openai-gatek",
+    "title_b": "Researchers are getting tired of OpenAI gatekeeping its breakthroughs",
+    "label": 0
+  }
+]

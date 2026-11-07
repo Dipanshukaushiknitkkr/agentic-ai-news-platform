@@ -1,0 +1,9 @@
+{
+  "title": "Hundreds of Artex AI hacking tools found publicly exposed to the web",
+  "link": "https://techcrunch.com/2026/11/06/hundreds-of-artex-ai-hacking-tools-found-publicly-exposed-to-the-web/",
+  "summary": "Security researchers found hundreds of servers hosting the penetration testing tool Artex exposed to the internet, allowing anyone access to the hacking tool.",
+  "published": "Fri, 06 Nov 2026 18:44:38 +0000",
+  "image_url": "https://techcrunch.com/wp-content/uploads/2024/02/GettyImages-1424498694.jpg?resize=1200,800",
+  "llm_summary": "Security researchers discovered that hundreds of servers around the world have unintentionally exposed the Artex penetration‑testing framework to the public internet. Because the tool is designed for security assessments, anyone can now download and run it without permission, turning these servers into open sources of a powerful hacking utility. The findings highlight the risks of misconfigured infrastructure that inadvertently makes security tools—and potentially sensitive data—readily accessible.",
+  "source": "TechCrunch"
+}

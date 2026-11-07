@@ -1,5 +1,8 @@
-from sqlalchemy import Boolean, Column, Integer, String, DateTime, Text, ForeignKey, Table, JSON
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import Boolean, Column, Integer, String, DateTime, Text, ForeignKey, Table, JSON, LargeBinary, Float
+try:
+    from sqlalchemy.orm import declarative_base  # SQLAlchemy 2.x
+except ImportError:
+    from sqlalchemy.ext.declarative import declarative_base  # SQLAlchemy 1.x
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from datetime import datetime
@@ -63,8 +66,18 @@ class Article(Base):
     source = Column(String, default="TechNews")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
+    # Story Clustering columns
+    cluster_id = Column(Integer, ForeignKey("clusters.id"), nullable=True, index=True)
+    is_copy_of = Column(String, ForeignKey("articles.id"), nullable=True, index=True)
+    embedding = Column(LargeBinary, nullable=True)
+    entities = Column(JSON, nullable=True)
+    minhash = Column(LargeBinary, nullable=True)
+    text_basis = Column(String, nullable=True)
+    clustered_at = Column(DateTime(timezone=True), nullable=True)
+
     # Relationships
     categories = relationship("ArticleCategory", back_populates="article")
+    cluster = relationship("Cluster", foreign_keys=[cluster_id], back_populates="articles")
 
 class ArticleCategory(Base):
     __tablename__ = "article_categories"
@@ -111,3 +124,33 @@ class NotificationLog(Base):
     notification_type = Column(String)  # "instant", "digest"
     sent_at = Column(DateTime(timezone=True), server_default=func.now())
     status = Column(String, default="pending")  # "pending", "sent", "failed"
+
+class Cluster(Base):
+    __tablename__ = "clusters"
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    primary_article_id = Column(String, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=datetime.utcnow)
+    updated_at = Column(DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow, index=True)
+    size = Column(Integer, default=1, nullable=False)
+
+    articles = relationship("Article", foreign_keys="Article.cluster_id", back_populates="cluster")
+
+class PairCache(Base):
+    __tablename__ = "pair_cache"
+    
+    a_id = Column(String, primary_key=True)
+    b_id = Column(String, primary_key=True)
+    verdict = Column(String, nullable=False)  # "SAME" | "DIFFERENT"
+    created_at = Column(DateTime(timezone=True), default=datetime.utcnow)
+
+class ClusterLog(Base):
+    __tablename__ = "cluster_log"
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    article_id = Column(String, nullable=False, index=True)
+    decision = Column(String, nullable=False)
+    best_cluster_id = Column(Integer, nullable=True)
+    best_score = Column(Float, nullable=True)
+    layer = Column(String, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=datetime.utcnow)

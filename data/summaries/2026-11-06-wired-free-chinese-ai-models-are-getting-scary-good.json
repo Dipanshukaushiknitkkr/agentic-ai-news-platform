@@ -1,0 +1,9 @@
+{
+  "title": "Free Chinese AI Models Are Getting Scary Good at Hacking",
+  "link": "https://www.wired.com/story/free-chinese-ai-models-are-getting-scary-good-at-hacking/",
+  "summary": "An experiment in which AI models were asked to break into simulated networks showed the hacking skills of DeepSeek and GLM to be not far behind OpenAI’s most advanced cyber model, which isn’t public.",
+  "published": "Fri, 06 Nov 2026 18:43:43 +0000",
+  "image_url": "https://media.wired.com/photos/6aebae965d3f8b6dd99468be/master/pass/Security_Open-WeightAIModels.gif",
+  "llm_summary": "A recent test asked several open‑source Chinese AI models—most notably DeepSeek and GLM—to infiltrate a simulated corporate network, and their tactics were almost on par with those of OpenAI’s top‑secret cyber‑security model. The results show that freely available AI tools are rapidly gaining the ability to generate realistic hacking instructions, raising new concerns about",
+  "source": "Wired"
+}

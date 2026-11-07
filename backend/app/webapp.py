@@ -27,12 +27,14 @@ import requests
 try:
     from backend.app.database import get_db, init_database
     from backend.app.auth import authenticate_user, create_access_token, get_current_active_user, get_current_admin_user, create_user, get_user_by_email, ACCESS_TOKEN_EXPIRE_MINUTES
-    from backend.app.models import User, Category, Article, ArticleCategory, UserSubscription, DigestLog
+    from backend.app.models import User, Category, Article, ArticleCategory, UserSubscription, DigestLog, Cluster
+    from dedup.config import DEFAULT_CONFIG
     from backend.app.schemas import *
     from backend.app.groq_client import call_groq, get_live_groq_models
     from backend.services.digest_service import digest_service
     from backend.services.categorization_service import categorizer
     from backend.services.history_service import history_service
+    from backend.services.contradiction_engine import contradiction_engine
 except ImportError:
     from app.database import get_db, init_database
     from app.auth import authenticate_user, create_access_token, get_current_active_user, get_current_admin_user, create_user, get_user_by_email, ACCESS_TOKEN_EXPIRE_MINUTES
@@ -43,6 +45,7 @@ except ImportError:
     from services.categorization_service import categorizer
     from scrapers.techcrunch import fetch_and_save_techcrunch_articles
     from services.history_service import history_service
+    from services.contradiction_engine import contradiction_engine
 
 from fastapi.templating import Jinja2Templates
 
@@ -623,12 +626,19 @@ def get_articles_feed(
             (Article.llm_summary.ilike(search_pattern))
         )
         
+    if getattr(DEFAULT_CONFIG, 'dedup_mode', 'cluster') == 'cluster':
+        query = query.outerjoin(Cluster, Article.cluster_id == Cluster.id).filter(
+            Article.is_copy_of.is_(None),
+            (Article.cluster_id.is_(None)) | (Cluster.primary_article_id == Article.id)
+        )
+        
     total = query.count()
     offset = (page - 1) * limit
     articles = query.order_by(Article.created_at.desc()).offset(offset).limit(limit).all()
     
     data = []
     for art in articles:
+        c_size = art.cluster.size if getattr(art, 'cluster', None) else 1
         data.append({
             'id': art.id,
             'title': art.title,
@@ -638,7 +648,9 @@ def get_articles_feed(
             'published': format_published_ist(art.published, art.created_at),
             'image_url': art.image_url or PLACEHOLDER_IMAGE,
             'source': getattr(art, 'source', 'TechNews') or 'TechNews',
-            'categories': [ac.category.name for ac in art.categories if ac.category]
+            'categories': [ac.category.name for ac in art.categories if ac.category],
+            'cluster_id': getattr(art, 'cluster_id', None),
+            'cluster_size': c_size
         })
         
     return {
@@ -648,6 +660,114 @@ def get_articles_feed(
         'has_more': (offset + len(articles)) < total,
         'articles': data
     }
+
+
+# In-Memory Cache for Cross-Source Factual Audits (article_id -> audit_report)
+FACT_CHECK_CACHE = {}
+
+@app.get("/api/articles/{article_id}/cross-check")
+async def cross_check_article_facts(article_id: str, db: Session = Depends(get_db)):
+    """
+    Autonomous Cross-Source Fact-Checking & Contradiction Radar.
+    Identifies multi-source coverage of the same event within a 48h window,
+    extracts grounded claims with quote spans, tracks corporate PR echoes,
+    and returns a mathematically sound Cross-Source Agreement Index with discrepancies.
+    """
+    if article_id in FACT_CHECK_CACHE:
+        return FACT_CHECK_CACHE[article_id]
+        
+    target = db.query(Article).filter(Article.id == article_id).first()
+    if not target:
+        raise HTTPException(status_code=404, detail="Article not found")
+        
+    target_dict = {
+        "id": target.id,
+        "title": target.title,
+        "summary": target.summary or "",
+        "llm_summary": target.llm_summary or "",
+        "source": getattr(target, 'source', 'TechNews') or 'TechNews',
+        "published": format_published_ist(target.published, target.created_at)
+    }
+    
+    related_articles = [target_dict]
+
+    # Priority 1: Grounded Cross-Source Story Cluster Retrieval
+    if getattr(target, 'cluster_id', None):
+        cluster_members = (
+            db.query(Article)
+            .filter(Article.cluster_id == target.cluster_id, Article.id != target.id)
+            .all()
+        )
+        for mem in cluster_members:
+            related_articles.append({
+                "id": mem.id,
+                "title": mem.title,
+                "summary": mem.summary or "",
+                "llm_summary": mem.llm_summary or "",
+                "source": getattr(mem, 'source', 'TechNews') or 'TechNews',
+                "published": format_published_ist(mem.published, mem.created_at),
+                "is_copy": bool(mem.is_copy_of)
+            })
+
+    # Priority 2: Fallback to temporal keyword search only if unclustered
+    if len(related_articles) == 1:
+        time_window = timedelta(hours=48)
+        target_time = target.created_at or datetime.utcnow()
+        candidates = (
+            db.query(Article)
+            .filter(
+                Article.id != target.id,
+                Article.source != target.source,
+                Article.created_at >= target_time - time_window,
+                Article.created_at <= target_time + time_window
+            )
+            .limit(60)
+            .all()
+        )
+        stopwords = set(["the", "and", "for", "with", "that", "this", "from", "are", "says", "new", "how", "why", "what", "will"])
+        target_tokens = set(re.findall(r"\b[a-zA-Z0-9]{3,}\b", target.title.lower())) - stopwords
+        for cand in candidates:
+            cand_tokens = set(re.findall(r"\b[a-zA-Z0-9]{3,}\b", cand.title.lower())) - stopwords
+            intersection = target_tokens & cand_tokens
+            if len(intersection) >= 2:
+                related_articles.append({
+                    "id": cand.id,
+                    "title": cand.title,
+                    "summary": cand.summary or "",
+                    "llm_summary": cand.llm_summary or "",
+                    "source": getattr(cand, 'source', 'TechNews') or 'TechNews',
+                    "published": format_published_ist(cand.published, cand.created_at)
+                })
+                if len(related_articles) >= 4:
+                    break
+                
+    # Run the Grounded Contradiction Engine
+    report = contradiction_engine.analyze_story_cluster(related_articles)
+    report["target_article_id"] = target.id
+    report["target_title"] = target.title
+    report["cluster_size"] = len(related_articles)
+    
+    # Cache for instant subsequent hits
+    FACT_CHECK_CACHE[article_id] = report
+    return report
+
+
+@app.get("/api/clusters/{cluster_id}/articles")
+def get_cluster_articles(cluster_id: int, db: Session = Depends(get_db)):
+    """Fetch all member articles belonging to a specific story cluster"""
+    arts = db.query(Article).filter(Article.cluster_id == cluster_id).order_by(Article.created_at.desc()).all()
+    return [
+        {
+            "id": a.id,
+            "title": a.title,
+            "link": a.link,
+            "source": getattr(a, "source", "TechNews") or "TechNews",
+            "published": format_published_ist(a.published, a.created_at),
+            "summary": a.llm_summary or a.summary or "",
+            "is_copy": bool(a.is_copy_of)
+        }
+        for a in arts
+    ]
 
 @app.get('/', response_class=HTMLResponse)
 def read_cards(request: Request, db: Session = Depends(get_db)):
@@ -670,6 +790,14 @@ def read_cards(request: Request, db: Session = Depends(get_db)):
             
     articles = []
     for art in db_articles:
+        # In cluster mode, only show cluster primaries / unique stories in feed
+        if getattr(DEFAULT_CONFIG, 'dedup_mode', 'cluster') == 'cluster':
+            if art.is_copy_of is not None:
+                continue
+            if art.cluster and art.cluster.primary_article_id != art.id:
+                continue
+
+        c_size = art.cluster.size if getattr(art, 'cluster', None) else 1
         articles.append({
             'id': art.id,
             'title': art.title,
@@ -679,7 +807,9 @@ def read_cards(request: Request, db: Session = Depends(get_db)):
             'published': format_published_ist(art.published, art.created_at),
             'image_url': art.image_url or PLACEHOLDER_IMAGE,
             'source': getattr(art, 'source', 'TechNews') or 'TechNews',
-            'categories': [ac.category for ac in art.categories if ac.category]
+            'categories': [ac.category for ac in art.categories if ac.category],
+            'cluster_id': getattr(art, 'cluster_id', None),
+            'cluster_size': c_size
         })
     return templates.TemplateResponse(request=request, name="index.html", context={"articles": articles})
 
